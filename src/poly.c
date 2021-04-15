@@ -1,16 +1,29 @@
 #include <stdlib.h>
 #include "poly.h"
+#include "safealloc.h"
 
 
 void PolyDestroy(Poly *p) {
     if(p->arr != NULL)
-        for(size_t i = 0; i < p->size; i++) {
+        for(size_t i = 0; i < p->size; ++i) {
             PolyDestroy(&p->arr[i].p);
             free(p->arr);
         }
 }
 
 Poly PolyClone(const Poly *p) {
+    Poly copy;
+    if(p->arr == NULL) {
+        copy.arr = NULL;
+        copy.coeff = p->coeff;
+    }
+    else {
+        copy.size = p->size;
+        copy.arr = SafeCalloc(copy.size, sizeof(Mono));
+        for(size_t i = 0; i < copy.size; ++i)
+            copy.arr[i] = MonoClone(&p->arr[i]);
+    }
+    return copy;
 }
 
 Poly PolyAdd(const Poly *p, const Poly *q) {
