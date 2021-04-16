@@ -4,16 +4,16 @@
 
 
 void PolyDestroy(Poly *p) {
-    if(p->arr != NULL)
-        for(size_t i = 0; i < p->size; i++) {
+    if(!PolyIsCoeff(p)) {
+        for(size_t i = 0; i < p->size; i++)
             PolyDestroy(&p->arr[i].p);
-            free(p->arr);
-        }
+        free(p->arr);
+    }
 }
 
 Poly PolyClone(const Poly *p) {
     Poly copy;
-    if(p->arr == NULL) {
+    if(PolyIsCoeff(p)) {
         copy.arr = NULL;
         copy.coeff = p->coeff;
     }
@@ -36,17 +36,25 @@ static Mono* MergeMonoArrays(Mono* arr1, Mono* arr2, size_t size1, size_t size2)
 }
 
 Poly PolyAdd(const Poly *p, const Poly *q) {
-    size_t count = 0;
-    if(p->arr != NULL)
-        count += p->size;
-    if(q->arr != NULL)
-        count += q->size;
-    if(count == 0)
+    if(PolyIsCoeff(p) && PolyIsCoeff(q))
         return (Poly) {.coeff = p->coeff + q->coeff, .arr = NULL};
-    else {
-        Mono* monos = MergeMonoArrays(p->arr, q->arr, p->size, q->size);
-        return PolyAddMonos(count, monos);
+
+    size_t count; Mono* monos;
+    if(PolyIsCoeff(p)) {
+        Mono m = MonoFromPoly(p, 0);
+        monos = MergeMonoArrays(&m, q->arr, 1, q->size);
+        count = q->size + 1;
     }
+    else if(PolyIsCoeff(q)) {
+        Mono m = MonoFromPoly(q, 0);
+        monos = MergeMonoArrays(&m, p->arr, 1, p->size);
+        count = p->size + 1;
+    }
+    else {
+        monos = MergeMonoArrays(p->arr, q->arr, p->size, q->size);
+        count = p->size + q->size;
+    }
+    return PolyAddMonos(count, monos);
 }
 
 static int CompareMono(const void* a, const void* b) {
@@ -61,13 +69,14 @@ static int CompareMono(const void* a, const void* b) {
 }
 
 static void SortMono(size_t count, Mono* monos) {
-    qsort(monos, count, sizeof(Poly), CompareMono);
+    qsort(monos, count, sizeof(Mono), CompareMono);
 }
 
 Poly PolyAddMonos(size_t count, const Mono monos[]) {
-    assert(count == 0);
     SortMono(count, (Mono*)monos );
-    Poly p;
+
+    Poly p = PolyFromCoeff(0);
+
     for(size_t i = 0; i < count; i++) {
         while (i < count - 1 && monos[i].exp == monos[i+1].exp)
             i++;
@@ -78,11 +87,14 @@ Poly PolyAddMonos(size_t count, const Mono monos[]) {
     for(size_t i = 0, j = 0; i < count; i++) {
         Poly poly_sum = monos[i].p;
         while (i < count - 1 && monos[i].exp == monos[i+1].exp) {
-            i++;
             poly_sum = PolyAdd(&poly_sum, &monos[i+1].p);
+            i++;
         }
         p.arr[j] = MonoFromPoly(&poly_sum, monos[i].exp);
+        j++;
     }
+    if(monos[count-1].exp == 0 || p.size == 1)
+        return p.arr[0].p;
     return p;
 }
 
@@ -106,8 +118,22 @@ poly_exp_t PolyDeg(const Poly *p) {
 
 }
 
-bool PolyIsEq(const Poly *p, const Poly *q) {
+bool MonoIsEq(const Mono *m, const Mono *n) {
+    if(m->exp == n->exp)
+        return PolyIsEq(&m->p, &n->p);
+    return false;
+}
 
+bool PolyIsEq(const Poly *p, const Poly *q) {
+    if(PolyIsCoeff(p) && PolyIsCoeff(q))
+        return p->coeff == q->coeff;
+    else if(!PolyIsCoeff(p) && !PolyIsCoeff(q) && p->size == q->size) {
+        for(size_t i = 0; i < p->size; i++)
+            if(!MonoIsEq(&p->arr[i], &q->arr[i]))
+                return false;
+        return true;
+    }
+    return false;
 }
 
 Poly PolyAt(const Poly *p, poly_coeff_t x) {
