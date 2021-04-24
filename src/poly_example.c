@@ -7,6 +7,25 @@
 #include <stdbool.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <stdio.h>
+static void PolyPrint(Poly p) {
+    if(PolyIsCoeff(&p))
+        printf("C(%ld)", p.coeff);
+    else {
+        printf("P(");
+        for(size_t i = 0; i < p.size; i++) {
+            PolyPrint(p.arr[i].p);
+            printf(", %d", p.arr[i].exp);
+            if(i < p.size - 1)
+                printf(", ");
+        }
+        printf(")");
+    }
+}
+
+#define PP PolyPrint
+#define ENDL printf("\n");
+#define SPACE printf(" ");
 
 #define CHECK_PTR(p)  \
   do {                \
@@ -37,7 +56,7 @@ static Poly MakePolyHelper(poly_exp_t dummy, ...) {
   for (size_t i = 0; i < count; ++i) {
     Poly p = va_arg(list, Poly);
     arr[i] = MonoFromPoly(&p, va_arg(list, poly_exp_t));
-    assert(i == 0 || MonoGetExp(&arr[i]) > MonoGetExp(&arr[i - 1]));
+    //assert(i == 0 || MonoGetExp(&arr[i]) > MonoGetExp(&arr[i - 1]));
   }
   va_end(list);
   Poly res = PolyAddMonos(count, arr);
@@ -308,16 +327,31 @@ static bool OverflowTest(void) {
   res &= TestAt(P(P(C(1), 1), 64), 2, C(0));
   return res;
 }
-
+#define PA PolyAdd
+#define D PolyDestroy
 int main() {
-  assert(SimpleAddTest());
-  assert(SimpleAddMonosTest());
-  /*assert(SimpleMulTest());
-  assert(SimpleNegTest());
-  assert(SimpleSubTest());
-  assert(SimpleDegByTest());
-  assert(SimpleDegTest());
-  assert(SimpleIsEqTest());
-  assert(SimpleAtTest());
-  assert(OverflowTest());*/
+
+    /*Poly a, b, c;
+    a = P(C(1), 0,
+          P(P(C(-1), 0, C(1), 1), 0), 0 );
+    //b = P(C(1),1);
+    //c = PA(&a, &b);
+    PP(a);
+    //SPACE PP(b);
+    //ENDL PP(c); ENDL
+    D(&a);
+    //D(&b);
+    //D(&c);
+        */
+
+    assert(SimpleAddTest());
+    assert(SimpleAddMonosTest());
+    /*assert(SimpleMulTest());
+    assert(SimpleNegTest());
+    assert(SimpleSubTest());
+    assert(SimpleDegByTest());
+    assert(SimpleDegTest());
+    assert(SimpleIsEqTest());
+    assert(SimpleAtTest());
+    assert(OverflowTest());*/
 }

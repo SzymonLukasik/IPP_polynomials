@@ -3,11 +3,12 @@
 #include "safealloc.h"
 
 
-void PolyDestroy(Poly *p) {
+void    PolyDestroy(Poly *p) {
     if(!PolyIsCoeff(p)) {
         for(size_t i = 0; i < p->size; i++)
-            PolyDestroy(&p->arr[i].p);
+            MonoDestroy(&p->arr[i]);
         free(p->arr);
+        p->arr = NULL;
     }
 }
 
@@ -26,13 +27,89 @@ Poly PolyClone(const Poly *p) {
     return copy;
 }
 
-static Mono* MergeMonoArrays(Mono* arr1, Mono* arr2, size_t size1, size_t size2) {
+static Mono* MergeMonoArrays(Mono arr1[], Mono arr2[], size_t size1, size_t size2) {
     Mono* monos = SafeCalloc(size1 + size2, sizeof(Mono));
     for(size_t i = 0; i < size1; i++)
         monos[i] = arr1[i];
     for(size_t i = 0; i < size2; i++)
         monos[i + size1] = arr2[i];
     return monos;
+}
+
+static int CompareMono(const void* a, const void* b) {
+    Mono m1 = *(Mono*) a;
+    Mono m2 = *(Mono*) b;
+
+    if(m1.exp < m2.exp)
+        return -1;
+    else if(m1.exp > m2.exp)
+        return 1;
+    return 0;
+}
+
+static void SortMono(size_t count, Mono monos[]) {
+    qsort(monos, count, sizeof(Mono), CompareMono);
+}
+
+static void PolyDeleteZeros(Poly* p) {
+    size_t size = 0;
+    for(size_t i = 0; i < p->size; i++)
+        if(!PolyIsZero(&p->arr[i].p))
+            size++;
+    if(size == 0) {
+        free(p->arr);
+        *p = (Poly) {.coeff = 0, .arr = NULL};
+    }
+    else if(size < p->size) {
+        Mono *arr = SafeCalloc(size, sizeof(Mono));
+        for (size_t i = 0, j = 0; i < p->size; i++)
+            if (!PolyIsZero(&p->arr[i].p))
+                arr[j++] = p->arr[i];
+        free(p->arr);
+        p->size = size;
+        p->arr = arr;
+    }
+ }
+
+Poly MyPolyAddMonos(size_t count, const Mono monos[]) {
+    assert(count != 0);
+
+    SortMono(count, (Mono*)monos );
+
+    Poly p = PolyFromCoeff(0);
+
+    for(size_t i = 0; i < count; i++) {
+        while (i < count - 1 && monos[i].exp == monos[i+1].exp)
+            i++;
+        p.size++;
+    }
+    p.arr = SafeCalloc(p.size, sizeof(Mono));
+
+    for(size_t i = 0, j = 0; i < count; i++) {
+        Poly poly_sum;
+        if(i < count - 1 && monos[i].exp == monos[i+1].exp)
+            poly_sum = monos[i].p;
+        else
+            poly_sum = PolyClone(&monos[i].p);
+
+        while (i < count - 1 && monos[i].exp == monos[i+1].exp) {
+            poly_sum = PolyAdd(&poly_sum, &monos[i+1].p);
+            i++;
+        }
+        p.arr[j] = MonoFromPoly(&poly_sum, monos[i].exp);
+        j++;
+    }
+
+    PolyDeleteZeros(&p);
+
+    if(p.arr != NULL && p.size == 1 && p.arr[0].exp == 0
+        && PolyIsCoeff(&p.arr[0].p)) {
+        Poly p_temp = p.arr[0].p;
+        free(p.arr);
+        p = p_temp;
+    }
+
+    return p;
 }
 
 Poly PolyAdd(const Poly *p, const Poly *q) {
@@ -54,47 +131,15 @@ Poly PolyAdd(const Poly *p, const Poly *q) {
         monos = MergeMonoArrays(p->arr, q->arr, p->size, q->size);
         count = p->size + q->size;
     }
-    return PolyAddMonos(count, monos);
-}
-
-static int CompareMono(const void* a, const void* b) {
-    Mono m1 = *(Mono*) a;
-    Mono m2 = *(Mono*) b;
-
-    if(m1.exp < m2.exp)
-        return -1;
-    else if(m1.exp > m2.exp)
-        return 1;
-    return 0;
-}
-
-static void SortMono(size_t count, Mono* monos) {
-    qsort(monos, count, sizeof(Mono), CompareMono);
+    Poly p_sum = MyPolyAddMonos(count, monos);
+    free(monos);
+    return p_sum;
 }
 
 Poly PolyAddMonos(size_t count, const Mono monos[]) {
-    SortMono(count, (Mono*)monos );
-
-    Poly p = PolyFromCoeff(0);
-
-    for(size_t i = 0; i < count; i++) {
-        while (i < count - 1 && monos[i].exp == monos[i+1].exp)
-            i++;
-        p.size++;
-    }
-    p.arr = SafeCalloc(p.size, sizeof(Mono));
-
-    for(size_t i = 0, j = 0; i < count; i++) {
-        Poly poly_sum = monos[i].p;
-        while (i < count - 1 && monos[i].exp == monos[i+1].exp) {
-            poly_sum = PolyAdd(&poly_sum, &monos[i+1].p);
-            i++;
-        }
-        p.arr[j] = MonoFromPoly(&poly_sum, monos[i].exp);
-        j++;
-    }
-    if(monos[count-1].exp == 0 || p.size == 1)
-        return p.arr[0].p;
+    Poly p = MyPolyAddMonos(count, monos);
+    for(size_t i = 0; i < count; i++)
+        MonoDestroy(&monos[i]);
     return p;
 }
 
