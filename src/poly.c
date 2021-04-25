@@ -28,7 +28,8 @@ Poly PolyClone(const Poly *p) {
 }
 
 void PolyReduce(Poly *p) {
-    if(p->arr != NULL && p->size == 1 && p->arr[0].exp == 0) {
+    if(!PolyIsCoeff(p) && p->size == 1 && p->arr[0].exp == 0
+        && PolyIsCoeff(&p->arr[0].p)) {
         Poly p_temp = p->arr[0].p;
         free(p->arr);
         *p = p_temp;
@@ -81,7 +82,8 @@ static void PolyDeleteZeros(Poly* p) {
  }
 
 Poly MyPolyAddMonos(size_t count, const Mono monos[]) {
-    assert(count != 0);
+    if(count == 0)
+        return PolyFromCoeff(0);
 
     SortMono(count, (Mono*)monos );
 
@@ -278,6 +280,11 @@ Poly PolyAt(const Poly *p, poly_coeff_t x) {
     }
     Poly res = PolyAddMonos(p->size, monos);
     free(monos);
+    if(!PolyIsCoeff(&res)) {
+        Poly p_temp = res.arr[0].p;
+        free(res.arr);
+        res = p_temp;
+    }
     return res;
 }
 
