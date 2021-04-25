@@ -3,7 +3,7 @@
 #include "safealloc.h"
 
 
-void    PolyDestroy(Poly *p) {
+void  PolyDestroy(Poly *p) {
     if(!PolyIsCoeff(p)) {
         for(size_t i = 0; i < p->size; i++)
             MonoDestroy(&p->arr[i]);
@@ -27,7 +27,16 @@ Poly PolyClone(const Poly *p) {
     return copy;
 }
 
-static Mono* MergeMonoArrays(Mono arr1[], Mono arr2[], size_t size1, size_t size2) {
+void PolyReduce(Poly *p) {
+    if(p->arr != NULL && p->size == 1 && p->arr[0].exp == 0) {
+        Poly p_temp = p->arr[0].p;
+        free(p->arr);
+        *p = p_temp;
+    }
+}
+
+static Mono* MergeMonoArrays(Mono arr1[], Mono arr2[],
+                             size_t size1, size_t size2) {
     Mono* monos = SafeCalloc(size1 + size2, sizeof(Mono));
     for(size_t i = 0; i < size1; i++)
         monos[i] = arr1[i];
@@ -86,29 +95,21 @@ Poly MyPolyAddMonos(size_t count, const Mono monos[]) {
     p.arr = SafeCalloc(p.size, sizeof(Mono));
 
     for(size_t i = 0, j = 0; i < count; i++) {
-        Poly poly_sum;
-        if(i < count - 1 && monos[i].exp == monos[i+1].exp)
-            poly_sum = monos[i].p;
-        else
-            poly_sum = PolyClone(&monos[i].p);
+        Poly p_sum, p_temp;
+        p_sum = PolyClone(&monos[i].p);
 
         while (i < count - 1 && monos[i].exp == monos[i+1].exp) {
-            poly_sum = PolyAdd(&poly_sum, &monos[i+1].p);
+            p_temp = p_sum;
+            p_sum = PolyAdd(&p_temp, &monos[i+1].p);
+            PolyDestroy(&p_temp);
             i++;
         }
-        p.arr[j] = MonoFromPoly(&poly_sum, monos[i].exp);
+        p.arr[j] = MonoFromPoly(&p_sum, monos[i].exp);
         j++;
     }
 
     PolyDeleteZeros(&p);
-
-    if(p.arr != NULL && p.size == 1 && p.arr[0].exp == 0
-        && PolyIsCoeff(&p.arr[0].p)) {
-        Poly p_temp = p.arr[0].p;
-        free(p.arr);
-        p = p_temp;
-    }
-
+    PolyReduce(&p);
     return p;
 }
 
@@ -139,28 +140,102 @@ Poly PolyAdd(const Poly *p, const Poly *q) {
 Poly PolyAddMonos(size_t count, const Mono monos[]) {
     Poly p = MyPolyAddMonos(count, monos);
     for(size_t i = 0; i < count; i++)
-        MonoDestroy(&monos[i]);
+        MonoDestroy((Mono*) &monos[i]);
     return p;
 }
 
+Poly PolyMulMonos(size_t p_count, Mono* p_monos,
+                  size_t q_count, Mono* q_monos) {
+    Mono* monos = SafeCalloc(p_count * q_count, sizeof(Mono));
+
+    for(size_t i = 0, z = 0; i < p_count; i++) {
+        for(size_t j = 0; j < q_count; j++) {
+            Poly p_mul = PolyMul(&p_monos[i].p, &q_monos[j].p);
+            monos[z++] = MonoFromPoly(&p_mul, p_monos[i].exp + q_monos[j].exp);
+        }
+    }
+
+    Poly res = PolyAddMonos(p_count * q_count, monos);
+    free(monos);
+    return res;
+}
+
 Poly PolyMul(const Poly *p, const Poly *q) {
+    if(PolyIsCoeff(p) && PolyIsCoeff(q))
+        return (Poly) {.coeff = p->coeff * q->coeff, .arr = NULL};
+
+    size_t p_count, q_count;
+    Mono* p_monos; Mono* q_monos;
+    if(PolyIsCoeff(p)) {
+        Mono m = MonoFromPoly(p, 0);
+        p_monos = &m;
+        p_count = 1;
+        q_monos = q->arr;
+        q_count = q->size;
+    }
+    else if(PolyIsCoeff(q)) {
+        Mono m = MonoFromPoly(q, 0);
+        q_monos = &m;
+        q_count = 1;
+        p_monos = p->arr;
+        p_count = p->size;
+    }
+    else {
+        p_monos = p->arr;
+        p_count = p->size;
+        q_monos = q->arr;
+        q_count = q->size;
+    }
+    return PolyMulMonos(p_count, p_monos, q_count, q_monos);
 
 }
 
 Poly PolyNeg(const Poly *p) {
-
+    Poly q = PolyFromCoeff(-1);
+    return PolyMul(p, &q);
 }
 
 Poly PolySub(const Poly *p, const Poly *q) {
+    Poly q_neg = PolyNeg(q);
+    Poly p_sum = PolyAdd(p ,&q_neg);
+    PolyDestroy(&q_neg);
+    return p_sum;
+}
 
+
+poly_exp_t max(poly_exp_t e1, poly_exp_t e2) {
+    if(e1 > e2)
+        return e1;
+    return e2;
 }
 
 poly_exp_t PolyDegBy(const Poly *p, size_t var_idx) {
-
+    if(var_idx == 0) {
+        if(PolyIsZero(p))
+            return -1;
+        if(PolyIsCoeff(p))
+            return 0;
+        return p->arr[p->size - 1].exp;
+    }
+    if(PolyIsCoeff(p))
+        return -1;
+    poly_exp_t res = -1;
+    for(size_t i = 0; i < p->size; i++) {
+        res = max(res, PolyDegBy(&p->arr[i].p, var_idx - 1));
+    }
+    return res;
 }
 
 poly_exp_t PolyDeg(const Poly *p) {
-
+    if(PolyIsZero(p))
+        return -1;
+    if(PolyIsCoeff(p))
+        return 0;
+    poly_exp_t res = -1;
+    for(size_t i = 0; i < p->size; i++) {
+        res = max(res, PolyDeg(&p->arr[i].p) + p->arr[i].exp);
+    }
+    return res;
 }
 
 bool MonoIsEq(const Mono *m, const Mono *n) {
@@ -181,8 +256,29 @@ bool PolyIsEq(const Poly *p, const Poly *q) {
     return false;
 }
 
-Poly PolyAt(const Poly *p, poly_coeff_t x) {
+poly_coeff_t Exponantiate(poly_coeff_t x, poly_exp_t exp) {
+    if(exp == 0)
+        return 1;
+    poly_coeff_t temp = Exponantiate(x, exp / 2);
+    if(exp % 2 == 0)
+        return temp * temp;
+    return temp * temp * x;
+}
 
+Poly PolyAt(const Poly *p, poly_coeff_t x) {
+    if(PolyIsCoeff(p))
+        return *p;
+
+    Mono* monos = SafeCalloc(p->size, sizeof(Mono));
+    Poly p_coeff, p_mul;
+    for(size_t i = 0; i < p->size; i++) {
+        p_coeff = PolyFromCoeff(Exponantiate(x, p->arr[i].exp));
+        p_mul = PolyMul(&p->arr[i].p, &p_coeff);
+        monos[i] = MonoFromPoly(&p_mul, 0);
+    }
+    Poly res = PolyAddMonos(p->size, monos);
+    free(monos);
+    return res;
 }
 
 

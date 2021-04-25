@@ -299,7 +299,7 @@ static bool SimpleIsEqTest(void) {
   res &= TestEq(P(C(1), 1), P(C(1), 2), false);
   res &= TestEq(P(C(1), 1), P(C(2), 1), false);
   res &= TestEq(POLY_P, POLY_P, true);
-  Poly a = C(1);
+Poly a = C(1);
   Poly b = C(2);
   Poly p = POLY_P;
   res &= TestEq(PolyAdd(&p, &a), PolyAdd(&p, &b), false);
@@ -328,30 +328,37 @@ static bool OverflowTest(void) {
   return res;
 }
 #define PA PolyAdd
+#define PM PolyMul
 #define D PolyDestroy
+#define PAT PolyAt
 int main() {
 
-    /*Poly a, b, c;
-    a = P(C(1), 0,
-          P(P(C(-1), 0, C(1), 1), 0), 0 );
-    //b = P(C(1),1);
-    //c = PA(&a, &b);
+   /*Poly a, b, c;
+    a =  P(
+            P(C(1), 1), 0,
+            P(C(1), 1), 0,
+            P(C(1), 1), 0);
+    //b = P(P(C(1), 2), 0, P(C(-1), 1), 1, C(1), 2);
+    //c = PM(&a, &b);
+    //c = PAT(&a, 2);
     PP(a);
-    //SPACE PP(b);
+    //ENDL PP(b);
     //ENDL PP(c); ENDL
     D(&a);
     //D(&b);
-    //D(&c);
-        */
+    //D(&c); */
+
+     /*P(P(C(1), 4), 0, P(C(1), 2), 2, C(1), 3), 2,
+                P(C(8), 0, C(4), 2, C(1), 4)*/
 
     assert(SimpleAddTest());
     assert(SimpleAddMonosTest());
-    /*assert(SimpleMulTest());
+    assert(SimpleMulTest());
     assert(SimpleNegTest());
     assert(SimpleSubTest());
     assert(SimpleDegByTest());
     assert(SimpleDegTest());
     assert(SimpleIsEqTest());
     assert(SimpleAtTest());
-    assert(OverflowTest());*/
+    assert(OverflowTest());
 }
