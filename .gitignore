@@ -1,3 +1,5 @@
 .idea
 cmake-build-debug
 src/testy-duze-zadanie-1
+debug
+release

@@ -272,8 +272,8 @@ Poly PolyMul(const Poly *p, const Poly *q) {
     if(PolyIsCoeff(p) && PolyIsCoeff(q))
         return (Poly) {.coeff = p->coeff * q->coeff, .arr = NULL};
 
-    size_t p_count, q_count;
-    Mono* p_monos; Mono* q_monos;
+    size_t p_count = 0, q_count = 0;
+    Mono* p_monos = NULL; Mono* q_monos = NULL;
     if(PolyIsCoeff(p)) {
         Mono m = MonoFromPoly(p, 0);
         p_monos = &m;
