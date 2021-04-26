@@ -232,7 +232,9 @@ Poly PolyAdd(const Poly *p, const Poly *q) {
 }
 
 Poly PolyAddMonos(size_t count, const Mono monos[]) {
-    Poly p = MyPolyAddMonos(count, monos);
+    Mono* monos_copy = MergeMonoArrays(NULL, monos, 0, count);
+    Poly p = MyPolyAddMonos(count, monos_copy);
+    free(monos_copy);
     for(size_t i = 0; i < count; i++)
         MonoDestroy((Mono*) &monos[i]);
     return p;
