@@ -232,7 +232,9 @@ Poly PolyAdd(const Poly *p, const Poly *q) {
 }
 
 Poly PolyAddMonos(size_t count, const Mono monos[]) {
-    Poly p = MyPolyAddMonos(count, monos);
+    Mono* monos_copy = MergeMonoArrays(NULL, monos, 0, count);
+    Poly p = MyPolyAddMonos(count, monos_copy);
+    free(monos_copy);
     for(size_t i = 0; i < count; i++)
         MonoDestroy((Mono*) &monos[i]);
     return p;
@@ -272,8 +274,8 @@ Poly PolyMul(const Poly *p, const Poly *q) {
     if(PolyIsCoeff(p) && PolyIsCoeff(q))
         return (Poly) {.coeff = p->coeff * q->coeff, .arr = NULL};
 
-    size_t p_count = 0, q_count = 0;
-    Mono* p_monos = NULL; Mono* q_monos = NULL;
+    size_t p_count, q_count;
+    Mono* p_monos; Mono* q_monos;
     if(PolyIsCoeff(p)) {
         Mono m = MonoFromPoly(p, 0);
         p_monos = &m;
