@@ -201,8 +201,6 @@ static Poly PolyAddMonosBrute(size_t count, const Mono *monos) {
 * @return wielomian będący sumą jednomianów
 */
 static Poly MyPolyAddMonos(size_t count, const Mono monos[]) {
-    if(count == 0)
-        return PolyFromCoeff(0);
     SortMono(count, (Mono*)monos );
     Poly p = PolyAddMonosBrute(count, monos);
     PolyDeleteZeros(&p);
@@ -214,25 +212,30 @@ Poly PolyAdd(const Poly *p, const Poly *q) {
     if(PolyIsCoeff(p) && PolyIsCoeff(q))
         return (Poly) {.coeff = p->coeff + q->coeff, .arr = NULL};
 
+    if(PolyIsCoeff(q))
+        return PolyAdd(q, p);
+
     size_t count; Mono* monos;
     if(PolyIsCoeff(p)) {
         Mono m = MonoFromPoly(p, 0);
         monos = MergeMonoArrays(&m, q->arr, 1, q->size);
         count = q->size + 1;
     }
-    else if(PolyIsCoeff(q))
-        return PolyAdd(q, p);
+    //Wielomiany p i q nie są współczynnikami
     else {
         monos = MergeMonoArrays(p->arr, q->arr, p->size, q->size);
         count = p->size + q->size;
     }
+
     Poly p_sum = MyPolyAddMonos(count, monos);
     free(monos);
     return p_sum;
 }
 
 Poly PolyAddMonos(size_t count, const Mono monos[]) {
-    Mono* monos_copy = MergeMonoArrays(NULL, monos, 0, count);
+    if(count == 0)
+        return PolyFromCoeff(0);
+    Mono* monos_copy = MergeMonoArrays(NULL, (Mono*) monos, 0, count);
     Poly p = MyPolyAddMonos(count, monos_copy);
     free(monos_copy);
     for(size_t i = 0; i < count; i++)
@@ -274,24 +277,14 @@ Poly PolyMul(const Poly *p, const Poly *q) {
     if(PolyIsCoeff(p) && PolyIsCoeff(q))
         return (Poly) {.coeff = p->coeff * q->coeff, .arr = NULL};
 
-    size_t p_count, q_count;
-    Mono* p_monos; Mono* q_monos;
+    if(PolyIsCoeff(q))
+        return PolyMul(q, p);
     if(PolyIsCoeff(p)) {
         Mono m = MonoFromPoly(p, 0);
-        p_monos = &m;
-        p_count = 1;
-        q_monos = q->arr;
-        q_count = q->size;
+        return PolyMulMonos(1, &m, q->size, q->arr);
     }
-    else if(PolyIsCoeff(q))
-        return PolyMul(q, p);
-    else {
-        p_monos = p->arr;
-        p_count = p->size;
-        q_monos = q->arr;
-        q_count = q->size;
-    }
-    return PolyMulMonos(p_count, p_monos, q_count, q_monos);
+    //Wielomiany p i q nie są współczynnikami
+    return PolyMulMonos(p->size, p->arr, q->size, q->arr);
 }
 
 Poly PolyNeg(const Poly *p) {
