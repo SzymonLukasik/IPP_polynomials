@@ -1,7 +1,13 @@
+/** @file
+  Implementacja interfejsu klasy wielomianów rzadkich wielu zmiennych.
+
+  @authors Szymon Łukasik <sl428760@mimuw.students.edu.pl>
+  @date 2021
+*/
+
 #include <stdlib.h>
 #include "poly.h"
 #include "safealloc.h"
-
 
 void  PolyDestroy(Poly *p) {
     if(!PolyIsCoeff(p)) {
@@ -27,7 +33,13 @@ Poly PolyClone(const Poly *p) {
     return copy;
 }
 
-void PolyReduce(Poly *p) {
+/**
+ * Redukuje wielomian. Jeśli wielomian @f$p@f$ jest postaci @f$c\cdot x^0@f$,
+ * gdzie @f$c@f$ to wielomian będący współczynnikiem, upraszcza @f$p@f$ do
+ * postaci @f$c@f$.
+ * @param[in] p : wielomian @f$p@f$
+ */
+static void PolyReduce(Poly *p) {
     if(!PolyIsCoeff(p) && p->size == 1 && p->arr[0].exp == 0
         && PolyIsCoeff(&p->arr[0].p)) {
         Poly p_temp = p->arr[0].p;
@@ -36,6 +48,14 @@ void PolyReduce(Poly *p) {
     }
 }
 
+/**
+ * Zwraca tablicę jednomianów zawierającą elementy tablicy @p arr1 i @p arr2.
+ * @param[in] arr1 : tablica jednomianów
+ * @param[in] arr2 : tablica jednomianów
+ * @param[in] size1 : rozmiar tablicy @p arr1
+ * @param[in] size2 : rozmiar tablicy @p arr2
+ * @return tablicę jednomianów będąca złączeniem tablic @p arr1 i @p arr2
+ */
 static Mono* MergeMonoArrays(Mono arr1[], Mono arr2[],
                              size_t size1, size_t size2) {
     Mono* monos = SafeCalloc(size1 + size2, sizeof(Mono));
@@ -46,6 +66,13 @@ static Mono* MergeMonoArrays(Mono arr1[], Mono arr2[],
     return monos;
 }
 
+/**
+ * Porównuje jednomiany ze względu na wykładnik.
+ * @param[in] a : jednomian @f$a@f$
+ * @param[in] b : jednomian @f$b@f$
+ * @return -1 gdy @p a.exp < @p b.exp, 1 gdy @p a.exp > @p b.exp, 0
+ * w przeciwnym przypadku
+ */
 static int CompareMono(const void* a, const void* b) {
     Mono m1 = *(Mono*) a;
     Mono m2 = *(Mono*) b;
@@ -57,19 +84,42 @@ static int CompareMono(const void* a, const void* b) {
     return 0;
 }
 
+/**
+ * Sortuje tablicę jednomianów rosnąco względem wykładnika.
+ * @param[in] count : rozmiar tablicy @p monos
+ * @param[in] monos : tablica jednomianów
+ */
 static void SortMono(size_t count, Mono monos[]) {
     qsort(monos, count, sizeof(Mono), CompareMono);
 }
 
+/**
+ * Zwraca liczbę jednomianów tożsamościowo równych zeru, zawartych w @f$p@f$.
+ * @param[in] p : wielomian niebędący współczynnikiem @f$p@f$
+ * @return liczba jednomianów zerowych zawartych w @f$p@f$
+ */
+static size_t NumberOfZeros(Poly *p) {
+    size_t n = 0;
+    for(size_t i = 0; i < p->size; i++) {
+        if (PolyIsZero(&p->arr[i].p))
+            n++;
+    }
+    return n;
+}
+
+/**
+ * Usuwa zerowe jednomiany zawarte w wielomianie @f$p@f$.
+ * @param[in] p : wielomian niebędący współczynnikiem @f$p@f$
+ */
 static void PolyDeleteZeros(Poly* p) {
-    size_t size = 0;
-    for(size_t i = 0; i < p->size; i++)
-        if(!PolyIsZero(&p->arr[i].p))
-            size++;
+    size_t size = p->size - NumberOfZeros(p);
+
+    //Wielomian jest wielomianem zerowym
     if(size == 0) {
         free(p->arr);
         *p = (Poly) {.coeff = 0, .arr = NULL};
     }
+    //Wielomian nie jest zerowy, ale zawiera zerowe jednomiany
     else if(size < p->size) {
         Mono *arr = SafeCalloc(size, sizeof(Mono));
         for (size_t i = 0, j = 0; i < p->size; i++)
@@ -80,36 +130,81 @@ static void PolyDeleteZeros(Poly* p) {
         p->arr = arr;
     }
  }
-
-Poly MyPolyAddMonos(size_t count, const Mono monos[]) {
-    if(count == 0)
-        return PolyFromCoeff(0);
-
-    SortMono(count, (Mono*)monos );
-
-    Poly p = PolyFromCoeff(0);
-
+/**
+ * Zwraca liczbę różnych wykładników jednomianów, które zawarte sa w tablicy @p monos.
+ * @param[in] count : rozmiar tablicy @p monos
+ * @param[in] monos : tablica jednomianów
+ * @return liczba różnych wykładników jednomianów z tablicy @p monos
+ */
+static size_t NumberOfDiffExponents(size_t count, const Mono *monos) {
+    size_t size = 0;
     for(size_t i = 0; i < count; i++) {
         while (i < count - 1 && monos[i].exp == monos[i+1].exp)
             i++;
-        p.size++;
+        size++;
     }
+    return size;
+}
+
+/**
+ * Zwraca wielomian będący sumą wszystkich wielomianów przy
+ * jednomianach z tablicy @p monos o rozważanym wykładniku.
+ * Ustawia indeks @p i na indeks wskazujący na ostatni jednomian
+ * z tablicy @p monos o rozważanym wykładniku.
+ * @param[in] count : rozmiar tablicy monos
+ * @param[in] monos : tablica jednomianów posortowanych rosnąco względem wykładnika
+ * @param[in] i : indeks pierwszego jednomianu w tablicy @p monos o rozważanym
+ *                wykładniku
+ * @return
+ */
+
+static Poly PolyAddMonosWithSameExponent(size_t count, const Mono monos[], size_t* i) {
+    Poly p_sum, p_temp;
+    p_sum = PolyClone(&monos[*i].p);
+
+    while (*i < count - 1 && monos[*i].exp == monos[*i+1].exp) {
+        p_temp = p_sum;
+        p_sum = PolyAdd(&p_temp, &monos[*i+1].p);
+        PolyDestroy(&p_temp);
+        (*i)++;
+    }
+
+    return p_sum;
+}
+
+/**
+* Zwraca wielomian powstały poprzez zsumowanie jednomianów
+  zawartych w tablicy @p monos. Wynikowy wielomian
+  nie jest zredukowany do pożądanej postaci.
+* @param[in] count : liczba jednomianów
+* @param[in] monos : tablica jednomianów
+* @return wielomian będący sumą jednomianów, niezredukowany
+*/
+static Poly PolyAddMonosBrute(size_t count, const Mono *monos) {
+    Poly p = PolyFromCoeff(0);
+    p.size = NumberOfDiffExponents(count, monos);
     p.arr = SafeCalloc(p.size, sizeof(Mono));
 
     for(size_t i = 0, j = 0; i < count; i++) {
-        Poly p_sum, p_temp;
-        p_sum = PolyClone(&monos[i].p);
-
-        while (i < count - 1 && monos[i].exp == monos[i+1].exp) {
-            p_temp = p_sum;
-            p_sum = PolyAdd(&p_temp, &monos[i+1].p);
-            PolyDestroy(&p_temp);
-            i++;
-        }
+        Poly p_sum = PolyAddMonosWithSameExponent(count, monos, &i);
         p.arr[j] = MonoFromPoly(&p_sum, monos[i].exp);
         j++;
     }
+    return p;
+}
 
+/**
+* Sumuje listę jednomianów i tworzy z nich wielomian.
+* Nie przejmuje na własność zawartość tablicy @p monos.
+* @param[in] count : liczba jednomianów
+* @param[in] monos : tablica jednomianów
+* @return wielomian będący sumą jednomianów
+*/
+static Poly MyPolyAddMonos(size_t count, const Mono monos[]) {
+    if(count == 0)
+        return PolyFromCoeff(0);
+    SortMono(count, (Mono*)monos );
+    Poly p = PolyAddMonosBrute(count, monos);
     PolyDeleteZeros(&p);
     PolyReduce(&p);
     return p;
@@ -125,11 +220,8 @@ Poly PolyAdd(const Poly *p, const Poly *q) {
         monos = MergeMonoArrays(&m, q->arr, 1, q->size);
         count = q->size + 1;
     }
-    else if(PolyIsCoeff(q)) {
-        Mono m = MonoFromPoly(q, 0);
-        monos = MergeMonoArrays(&m, p->arr, 1, p->size);
-        count = p->size + 1;
-    }
+    else if(PolyIsCoeff(q))
+        return PolyAdd(q, p);
     else {
         monos = MergeMonoArrays(p->arr, q->arr, p->size, q->size);
         count = p->size + q->size;
@@ -146,8 +238,22 @@ Poly PolyAddMonos(size_t count, const Mono monos[]) {
     return p;
 }
 
-Poly PolyMulMonos(size_t p_count, Mono* p_monos,
+/**
+ * Zwraca wielomian będący sumą iloczynów jednomianów
+ * zawartych w tablicach @p p_monos i @p q_monos. Mnoży każdy
+ * jednomian z tablicy @p p_monos z każdym jednomianem z tablicy
+ * @p q_monos, i zwraca sumę tych iloczynów.
+ * @param[in] p_count : rozmiar tablicy @p p_monos
+ * @param[in] p_monos : tablica jednomianów
+ * @param[in] q_count : rozmiar tablicy @p q_monos
+ * @param[in] q_monos : tablica jednomianów
+ * @return wielomian będący sumą iloczynów jednomianów
+ * zawartych w tablicach @p p_monos i @p q_monos
+ */
+
+static Poly PolyMulMonos(size_t p_count, Mono* p_monos,
                   size_t q_count, Mono* q_monos) {
+
     Mono* monos = SafeCalloc(p_count * q_count, sizeof(Mono));
 
     for(size_t i = 0, z = 0; i < p_count; i++) {
@@ -175,13 +281,8 @@ Poly PolyMul(const Poly *p, const Poly *q) {
         q_monos = q->arr;
         q_count = q->size;
     }
-    else if(PolyIsCoeff(q)) {
-        Mono m = MonoFromPoly(q, 0);
-        q_monos = &m;
-        q_count = 1;
-        p_monos = p->arr;
-        p_count = p->size;
-    }
+    else if(PolyIsCoeff(q))
+        return PolyMul(q, p);
     else {
         p_monos = p->arr;
         p_count = p->size;
@@ -189,7 +290,6 @@ Poly PolyMul(const Poly *p, const Poly *q) {
         q_count = q->size;
     }
     return PolyMulMonos(p_count, p_monos, q_count, q_monos);
-
 }
 
 Poly PolyNeg(const Poly *p) {
@@ -204,8 +304,12 @@ Poly PolySub(const Poly *p, const Poly *q) {
     return p_sum;
 }
 
-
-poly_exp_t max(poly_exp_t e1, poly_exp_t e2) {
+/** Zwraca największy z dwóch wykładników.
+ * @param[in] e1 : wykładnik
+ * @param[in] e2 : wykładnik
+ * @return @f$\max(e_1, e_2)@f$
+ */
+static poly_exp_t max(poly_exp_t e1, poly_exp_t e2) {
     if(e1 > e2)
         return e1;
     return e2;
@@ -219,8 +323,12 @@ poly_exp_t PolyDegBy(const Poly *p, size_t var_idx) {
             return 0;
         return p->arr[p->size - 1].exp;
     }
+
+    /* Przypadek gdy sprawdzamy stopień względem zmiennej,
+     * której nie reprezentuje dany wielomian. */
     if(PolyIsCoeff(p))
         return -1;
+
     poly_exp_t res = -1;
     for(size_t i = 0; i < p->size; i++) {
         res = max(res, PolyDegBy(&p->arr[i].p, var_idx - 1));
@@ -233,14 +341,20 @@ poly_exp_t PolyDeg(const Poly *p) {
         return -1;
     if(PolyIsCoeff(p))
         return 0;
+
     poly_exp_t res = -1;
     for(size_t i = 0; i < p->size; i++) {
         res = max(res, PolyDeg(&p->arr[i].p) + p->arr[i].exp);
     }
     return res;
 }
-
-bool MonoIsEq(const Mono *m, const Mono *n) {
+/**
+ * Sprawdza równość dwóch jednomianów
+ * @param[in] m : jednomian
+ * @param[in] n : jednomian
+ * @return prawda gdy @f$ m = n @f$, fałsz w przeciwnym przypadku
+ */
+static bool MonoIsEq(const Mono *m, const Mono *n) {
     if(m->exp == n->exp)
         return PolyIsEq(&m->p, &n->p);
     return false;
@@ -257,8 +371,14 @@ bool PolyIsEq(const Poly *p, const Poly *q) {
     }
     return false;
 }
-
-poly_coeff_t Exponantiate(poly_coeff_t x, poly_exp_t exp) {
+/**
+ * Zwraca wartość liczby @p x podniesionej do potęgi @p exp.
+ * Wykorzystuje algorytm szybkiego potęgowania.
+ * @param[in] x : potęgowana liczba
+ * @param[in] exp : wykładnik potęgi
+ * @return @f$ x^{exp} @f$
+ */
+static poly_coeff_t Exponantiate(poly_coeff_t x, poly_exp_t exp) {
     if(exp == 0)
         return 1;
     poly_coeff_t temp = Exponantiate(x, exp / 2);
@@ -266,20 +386,45 @@ poly_coeff_t Exponantiate(poly_coeff_t x, poly_exp_t exp) {
         return temp * temp;
     return temp * temp * x;
 }
-
-Poly PolyAt(const Poly *p, poly_coeff_t x) {
-    if(PolyIsCoeff(p))
-        return *p;
-
+/**
+ * Tworzy tablicę @p monos jednomianów powstałych poprzez
+ * podstawienie za zmienną @f$x_0@f$ w jednomianach zawartych w
+ * wielomianie @p p, wartości @p x i "opakowanie" ich w sztuczną
+ * zmienną o wykładniku 0. Iloczyn wielomianu stojącego
+ * przy jednomianie z wartością @p x podniesioną do odpowiedniej potęgi
+ * zamieniamy w jednomian nowej zmiennej o wykładniku 0 i zapisujemy
+ * w tablicy @p monos. Umożliwi nam to później wywołanie funkcji
+ * PolyAddMonos w celu obliczenia wyniku funkcji PolyAt.
+ * @param[in] p : wielomian niebędący współczynnikiem
+ * @param[in] x : wartość, którą podstawiamy za zmienną
+ * @return tablica jednomianów powstałych w opisany wyżej sposób
+ */
+static Mono* MonosAtFromPoly(const Poly *p, poly_coeff_t x) {
     Mono* monos = SafeCalloc(p->size, sizeof(Mono));
     Poly p_coeff, p_mul;
+
     for(size_t i = 0; i < p->size; i++) {
         p_coeff = PolyFromCoeff(Exponantiate(x, p->arr[i].exp));
         p_mul = PolyMul(&p->arr[i].p, &p_coeff);
         monos[i] = MonoFromPoly(&p_mul, 0);
     }
+    return monos;
+}
+
+Poly PolyAt(const Poly *p, poly_coeff_t x) {
+    if(PolyIsCoeff(p))
+        return *p;
+
+    Mono* monos = MonosAtFromPoly(p, x);
     Poly res = PolyAddMonos(p->size, monos);
     free(monos);
+
+    /* W funkcji MonosAtFromPoly sztucznie dodaliśmy zmienną o wykładniku 0,
+     * dlatego musimy teraz zredukować wielomian jeżeli PolyAddMonos nie
+     * zrobiło tego wcześniej.
+     * (PolyAddMonos zredukuje wielomian tylko gdy wynikiem jest
+     * współczynnik. - My chcemy zredukować także w przeciwnym
+     * przypadku.) */
     if(!PolyIsCoeff(&res)) {
         Poly p_temp = res.arr[0].p;
         free(res.arr);
@@ -287,14 +432,3 @@ Poly PolyAt(const Poly *p, poly_coeff_t x) {
     }
     return res;
 }
-
-
-
-
-
-
-
-
-
-
-

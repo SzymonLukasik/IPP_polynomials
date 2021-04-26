@@ -49,4 +49,3 @@ if (DOXYGEN_FOUND)
         COMMENT "Generating API documentation with Doxygen"
     )
 endif (DOXYGEN_FOUND)
-
