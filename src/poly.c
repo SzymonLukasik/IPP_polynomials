@@ -20,19 +20,19 @@ void PolyDestroy(Poly *p) {
 }
 
 Poly PolyClone(const Poly *p) {
-    Poly copy;
+    Poly clone;
 
     if (PolyIsCoeff(p)) {
-        copy.arr = NULL;
-        copy.coeff = p->coeff;
+        clone.arr = NULL;
+        clone.coeff = p->coeff;
     } else {
-        copy.size = p->size;
-        copy.arr = SafeCalloc(copy.size, sizeof(Mono));
-        for (size_t i = 0; i < copy.size; i++)
-            copy.arr[i] = MonoClone(&p->arr[i]);
+        clone.size = p->size;
+        clone.arr = SafeCalloc(clone.size, sizeof(Mono));
+        for (size_t i = 0; i < clone.size; i++)
+            clone.arr[i] = MonoClone(&p->arr[i]);
     }
 
-    return copy;
+    return clone;
 }
 
 /**
@@ -127,7 +127,7 @@ static void PolyDeleteZeros(Poly *p) {
         free(p->arr);
         *p = (Poly) {.coeff = 0, .arr = NULL};
     }
-        // Wielomian nie jest zerowy, ale zawiera zerowe jednomiany
+    // Wielomian nie jest zerowy, ale zawiera zerowe jednomiany
     else if (size < p->size) {
         Mono *arr = SafeCalloc(size, sizeof(Mono));
 
@@ -147,7 +147,7 @@ static void PolyDeleteZeros(Poly *p) {
  * @param[in] monos : tablica jednomianów
  * @return liczba różnych wykładników jednomianów z tablicy @p monos
  */
-static size_t NumberOfDiffExponents(size_t count, const Mono *monos) {
+static size_t DistinctExponentsCount(size_t count, const Mono *monos) {
     size_t n = 0;
 
     for (size_t i = 0; i < count; i++) {
@@ -178,7 +178,7 @@ static Poly PolyAddMonosWithSameExponent(size_t count, const Mono monos[], size_
         Poly p_sum = PolyAdd(&monos[*i].p, &monos[*i + 1].p);
         (*i)++;
 
-        //Dodajemy resztę jednomianów o tym samym wykładniku.
+        // Dodajemy resztę jednomianów o tym samym wykładniku.
         while (*i < count - 1 && monos[*i].exp == monos[*i + 1].exp) {
             Poly p_temp = p_sum;
             p_sum = PolyAdd(&p_sum, &monos[*i + 1].p);
@@ -188,7 +188,7 @@ static Poly PolyAddMonosWithSameExponent(size_t count, const Mono monos[], size_
 
         return p_sum;
 
-    } //W tablicy monos jest tylko jeden jednomian o rozważanym wykładniku
+    } // W tablicy monos jest tylko jeden jednomian o rozważanym wykładniku
     else
         return PolyClone(&monos[*i].p);
 }
@@ -204,7 +204,7 @@ static Poly PolyAddMonosWithSameExponent(size_t count, const Mono monos[], size_
 static Poly PolyAddMonosBrute(size_t count, const Mono *monos) {
     Poly p = PolyFromCoeff(0);
 
-    p.size = NumberOfDiffExponents(count, monos);
+    p.size = DistinctExponentsCount(count, monos);
     p.arr = SafeCalloc(p.size, sizeof(Mono));
 
     for (size_t i = 0, j = 0; i < count; i++) {
@@ -263,7 +263,7 @@ Poly PolyAddMonos(size_t count, const Mono monos[]) {
     if (count == 0)
         return PolyFromCoeff(0);
 
-    //Kopiujemy tablicę monos.
+    // Kopiujemy tablicę monos.
     Mono *monos_copy = MergeMonoArrays(NULL, (Mono *) monos, 0, count);
 
     Poly p = PolyAddMonosNoOwnershipTransfer(count, monos_copy);
