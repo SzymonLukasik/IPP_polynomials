@@ -170,7 +170,7 @@ static size_t DistinctExponentsCount(size_t count, const Mono *monos) {
  * @param[in] monos : tablica jednomianów posortowanych rosnąco względem wykładnika
  * @param[in] i : indeks pierwszego jednomianu w tablicy @p monos o rozważanym
  *                wykładniku
- * @return
+ * @return wielomian będący sumą jednomianów
  */
 static Poly PolyAddMonosWithSameExponent(size_t count, const Mono monos[], size_t *i) {
 
