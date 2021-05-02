@@ -333,20 +333,17 @@ static bool OverflowTest(void) {
 #define PAT PolyAt
 int main() {
 
-   /*Poly a, b, c;
-    a =  P(
-            P(C(1), 1), 0,
-            P(C(1), 1), 0,
-            P(C(1), 1), 0);
+   Poly a, b, c;
+    a =  C(0);
     //b = P(P(C(1), 2), 0, P(C(-1), 1), 1, C(1), 2);
     //c = PM(&a, &b);
     //c = PAT(&a, 2);
-    PP(a);
+    printf("%d \n", PolyDegBy(&a, 10));
     //ENDL PP(b);
     //ENDL PP(c); ENDL
     D(&a);
     //D(&b);
-    //D(&c); */
+    //D(&c);
 
      /*P(P(C(1), 4), 0, P(C(1), 2), 2, C(1), 3), 2,
                 P(C(8), 0, C(4), 2, C(1), 4)*/

@@ -24,12 +24,12 @@ na takich wielomianach, czyli:
 
 ### Opis implementacji
 
-Wielomiany niebędące wsþółczynnikami utworzone przez funkcje interfejsu
+Wielomiany niebędące współczynnikami utworzone przez funkcje interfejsu
 zawierają tablicę jednomianów posortowaną rosnąco względem wykładników.
 
 Za ten efekt odpowiedzialne są funkcje dodające wielomiany, które powinny
 być wykorzystywane do tworzenia nietrywialnych wielomianów, między innymi dlatego, że
-inne funkcje, na przykład funkcja mnożąca wielomiany, korzystają z tej własności.
+inne funkcje, na przykład funkcja porównująca wielomiany, korzystają z tej własności.
 
 Funkcja dodająca wielomiany działa w czasie proporcjonalnym do sumy
 szerokości wielomianów pomnożonego przez kwadrat głębokości wielomianów.

@@ -199,7 +199,12 @@ poly_exp_t PolyDegBy(const Poly *p, size_t var_idx);
 poly_exp_t PolyDeg(const Poly *p);
 
 /**
- * Sprawdza równość dwóch wielomianów.
+ * Sprawdza równość dwóch wielomianów. Zakłada przy tym, że jeśli
+ * wielomian nie jest współczynnikiem, to tablica zawieranych przez
+ * niego jednomianów jest posortowana rosnąco względem wykładnika.
+ * Ta własność umożliwia jednoznaczną reprezentację wielomianów
+ * i jest spełniona przez wielomiany utworzone przy pomocy funkcji
+ * udostępnianych przez ten interfejs.
  * @param[in] p : wielomian @f$p@f$
  * @param[in] q : wielomian @f$q@f$
  * @return @f$p = q@f$

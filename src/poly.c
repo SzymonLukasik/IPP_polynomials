@@ -105,6 +105,7 @@ static void SortMono(size_t count, Mono monos[]) {
  * @return liczba jednomianów zerowych zawartych w @f$p@f$
  */
 static size_t NumberOfZeros(Poly *p) {
+    assert(!PolyIsCoeff(p));
     size_t n = 0;
 
     for (size_t i = 0; i < p->size; i++) {
@@ -120,6 +121,7 @@ static size_t NumberOfZeros(Poly *p) {
  * @param[in] p : wielomian niebędący współczynnikiem @f$p@f$
  */
 static void PolyDeleteZeros(Poly *p) {
+    assert(!PolyIsCoeff(p));
     size_t size = p->size - NumberOfZeros(p);
 
     // Wielomian jest wielomianem zerowym
@@ -354,10 +356,12 @@ poly_exp_t PolyDegBy(const Poly *p, size_t var_idx) {
         return p->arr[p->size - 1].exp;
     }
 
-    /* Przypadek gdy sprawdzamy stopień względem zmiennej,
+    /* Przypadki gdy sprawdzamy stopień względem zmiennej,
      * której nie reprezentuje dany wielomian. */
-    if (PolyIsCoeff(p))
+    if (PolyIsZero(p))
         return -1;
+    if (PolyIsCoeff(p))
+        return 0;
 
     poly_exp_t res = -1;
     for (size_t i = 0; i < p->size; i++)
@@ -397,9 +401,16 @@ bool PolyIsEq(const Poly *p, const Poly *q) {
         return p->coeff == q->coeff;
 
     else if (!PolyIsCoeff(p) && !PolyIsCoeff(q) && p->size == q->size) {
-        for (size_t i = 0; i < p->size; i++)
+        for (size_t i = 0; i < p->size; i++) {
+            /* Sprawdzamy czy jest spełniony niezmiennik dotyczący
+             * uporządkowania jednomianów. */
+            assert(i == 0 ||
+                (MonoGetExp(&p->arr[i]) > MonoGetExp(&p->arr[i - 1]) &&
+                 MonoGetExp(&q->arr[i]) > MonoGetExp(&q->arr[i - 1])));
+
             if (!MonoIsEq(&p->arr[i], &q->arr[i]))
                 return false;
+        }
 
         return true;
     }
@@ -428,9 +439,10 @@ static poly_coeff_t Exponantiate(poly_coeff_t x, poly_exp_t exp) {
 /**
  * Tworzy tablicę @p monos jednomianów powstałych poprzez
  * podstawienie za zmienną @f$x_0@f$ w jednomianach zawartych w
- * wielomianie @p p, wartości @p x i "opakowanie" ich w sztuczną
- * zmienną o wykładniku 0. Iloczyn wielomianu stojącego
- * przy jednomianie z wartością @p x podniesioną do odpowiedniej potęgi
+ * wielomianie @p p, wartości @p x i "opakowanie"  tak utworzonych
+ * wielomianów w sztuczną zmienną o wykładniku 0.
+ * Wielomian będący iloczynem wielomianu stojącego
+ * przy jednomianie oraz wartości @p x podniesionej do odpowiedniej potęgi,
  * zamieniamy w jednomian nowej zmiennej o wykładniku 0 i zapisujemy
  * w tablicy @p monos. Umożliwi nam to później wywołanie funkcji
  * PolyAddMonos w celu obliczenia wyniku funkcji PolyAt.
@@ -445,7 +457,7 @@ static Mono *MonosAtFromPoly(const Poly *p, poly_coeff_t x) {
     for (size_t i = 0; i < p->size; i++) {
         p_coeff = PolyFromCoeff(Exponantiate(x, p->arr[i].exp));
         p_mul = PolyMul(&p->arr[i].p, &p_coeff);
-        monos[i] = MonoFromPoly(&p_mul, 0);
+        monos[i] = MonoFromPoly(&p_mul, 1);
     }
 
     return monos;
