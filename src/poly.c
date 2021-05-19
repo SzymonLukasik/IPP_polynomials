@@ -7,7 +7,7 @@
 
 #include <stdlib.h>
 #include "poly.h"
-#include "safealloc.h"
+#include "safe_alloc.h"
 
 void PolyDestroy(Poly *p) {
     if (!PolyIsCoeff(p)) {

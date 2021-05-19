@@ -21,17 +21,19 @@ set(CMAKE_C_FLAGS "-std=c11 -Wall -Wextra")
 
 # Wskazujemy pliki źródłowe.
 set(SOURCE_FILES
-    src/safealloc.c
-    src/safealloc.h
+        src/safe_alloc.c
+        src/safe_alloc.h
     src/poly.c
     src/poly.h
-    src/poly_example.c
-    )
+    src/calc.c
+    src/calc.h
+    src/poly_stack.c
+    src/poly_stack.h)
 
-set(EXTENSION_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/testy-duze-zadanie-1/CMakeExtension.txt")
-if (EXISTS "${EXTENSION_PATH}")
-	include("${EXTENSION_PATH}")
-endif ()
+#set(EXTENSION_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/testy-duze-zadanie-1/CMakeExtension.txt")
+#if (EXISTS "${EXTENSION_PATH}")
+#	include("${EXTENSION_PATH}")
+#endif ()
 
 # Wskazujemy plik wykonywalny.
 add_executable(poly ${SOURCE_FILES})
