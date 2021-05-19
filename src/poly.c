@@ -1,7 +1,7 @@
 /** @file
   Implementacja interfejsu klasy wielomianów rzadkich wielu zmiennych.
 
-  @authors Szymon Łukasik <sl428760@mimuw.students.edu.pl>
+  @author Szymon Łukasik <sl428760@mimuw.students.edu.pl>
   @date 2021
 */
 
