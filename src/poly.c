@@ -6,8 +6,9 @@
 */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include "poly.h"
-#include "safealloc.h"
+#include "safe_alloc.h"
 
 void PolyDestroy(Poly *p) {
     if (!PolyIsCoeff(p)) {
@@ -484,4 +485,18 @@ Poly PolyAt(const Poly *p, poly_coeff_t x) {
     }
 
     return res;
+}
+
+void Print(Poly p) {
+    if(PolyIsCoeff(&p))
+        printf("%ld", p.coeff);
+    else {
+        for(size_t i = 0; i < p.size; i++) {
+            printf("(");
+            Print(p.arr[i].p);
+            printf(",%d)", p.arr[i].exp);
+            if(i < p.size - 1)
+                printf("+");
+        }
+    }
 }
