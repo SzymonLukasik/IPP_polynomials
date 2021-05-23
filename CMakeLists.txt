@@ -28,7 +28,7 @@ set(SOURCE_FILES
     src/calc.c
     src/calc.h
     src/poly_stack.c
-    src/poly_stack.h)
+    src/poly_stack.h src/parsing.c src/parsing.h src/mono_stack.c src/mono_stack.h)
 
 #set(EXTENSION_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/testy-duze-zadanie-1/CMakeExtension.txt")
 #if (EXISTS "${EXTENSION_PATH}")
