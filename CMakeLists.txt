@@ -10,22 +10,30 @@ endif ()
 set_property(GLOBAL PROPERTY RULE_MESSAGES OFF)
 
 # Chcemy zobaczyć polecenia wywołane przez make.
-set(CMAKE_VERBOSE_MAKEFILE ON)
+set(CMAKE_VERBOSE_MAKEFILE OFF)
 
 # Ustawiamy wspólne opcje kompilowania dla wszystkich wariantów projektu.
 set(CMAKE_C_FLAGS "-std=c11 -Wall -Wextra")
 # Domyślne opcje dla wariantów Release i Debug są sensowne.
 # Jeśli to konieczne, ustawiamy tu inne.
 # set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG")
-# set(CMAKE_C_FLAGS_DEBUG "-g")
+# set(CMAKE_C_FLAGS_DEBUG "-g -ggdb")
 
 # Wskazujemy pliki źródłowe.
 set(SOURCE_FILES
+        src/safe_alloc.c
+        src/safe_alloc.h
     src/poly.c
     src/poly.h
-    src/safealloc.c
-    src/safealloc.h
-    src/poly_example.c)
+    src/calc.c
+    src/calc.h
+    src/poly_stack.c
+    src/poly_stack.h src/parsing.c src/parsing.h src/mono_stack.c src/mono_stack.h)
+
+#set(EXTENSION_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/testy-duze-zadanie-1/CMakeExtension.txt")
+#if (EXISTS "${EXTENSION_PATH}")
+#	include("${EXTENSION_PATH}")
+#endif ()
 
 # Wskazujemy plik wykonywalny.
 add_executable(poly ${SOURCE_FILES})
