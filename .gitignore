@@ -5,6 +5,6 @@ debug
 release
 src/testy-duze-zadanie-1
 src/testy-duze-zadanie-2
-examples
-my_examples
-scripts
+src/examples
+src/my_examples
+src/scripts
