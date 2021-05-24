@@ -26,8 +26,8 @@ MonoStack NewMonoStack();
 
 /**
  * Wstawia jednomian na wierzchołek stosu.
- * @param[out]  stack : wskaźnik na stos jednomianów
- * @param[in]  poly : jednomian
+ * @param[out] stack : wskaźnik na stos jednomianów
+ * @param[in] mono : jednomian
  */
 void MonoStackPush(MonoStack *stack, Mono mono);
 
