@@ -332,8 +332,8 @@ static string GetParameter(string line, size_t line_length) {
  * @return Czy linię należy interpretować jako polecenie DEG_BY?
  */
 static bool IsDegBy(string line, Action *action, size_t line_length) {
-    if (strncmp(line, "DEG_BY", 6) == 0 &&
-        (line[6] == '\n' || line[6] == ' ')) {
+    if (strncmp(line, "DEG_BY", 6) == 0
+        && (line[6] == '\n' || line[6] == ' ')) {
         string param = GetParameter(line, line_length);
         if (NumberTryToParse(param, VAR_IDX,
                              &action->spec.command.param.var_idx,
@@ -362,8 +362,8 @@ static bool IsDegBy(string line, Action *action, size_t line_length) {
  * @return Czy linię należy interpretować jako polecenie AT?
  */
 static bool IsAt(string line, size_t line_length, Action *action) {
-    if (strncmp(line, "AT", 2) == 0 &&
-        (line[2] == '\n' || line[2] == ' ')) {
+    if (strncmp(line, "AT", 2) == 0
+        && (line[2] == '\n' || line[2] == ' ')) {
         string param = GetParameter(line, line_length);
         // Dokonujemy próby parsowania parametru
         if (NumberTryToParse(param, COEFF, &action->spec.command.param.x,
