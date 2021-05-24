@@ -1,3 +1,10 @@
+/** @file
+  Implementacja biblioteki udostępniającej stos jednomianów.
+
+  @author Szymon Łukasik <sl428760@mimuw.students.edu.pl>
+  @date 2021
+*/
+
 #include <stdlib.h>
 
 #include "safe_alloc.h"

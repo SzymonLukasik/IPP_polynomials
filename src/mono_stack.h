@@ -1,3 +1,10 @@
+/** @file
+  Bilbioteka udostępniająca stos jednomianów.
+
+  @author Szymon Łukasik <sl428760@mimuw.students.edu.pl>
+  @date 2021
+*/
+
 #ifndef __MONO_STACK_H__
 #define __MONO_STACK_H__
 
