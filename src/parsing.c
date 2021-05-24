@@ -480,7 +480,7 @@ Action ParseLine(string line, ssize_t line_length) {
 
     // Dodajemy na koniec lini znak '\n' jeśli się nim nie kończy.
     if (line[line_length - 1] != '\n')
-        strncat(line, "\n", 1);
+        strcat(line, "\n");
 
     // Jeśli linia jest poleceniem, parsujemy ją.
     if (IsCommand(line, line_length, &action))
