@@ -17,8 +17,8 @@ void MonoStackPush(MonoStack *stack, Mono mono) {
             stack->capacity = 1;
         else
             stack->capacity *= 2;
-        stack->data = (Mono*) SafeRealloc(stack->data,
-                                          stack->capacity * (sizeof(Mono)));
+        stack->data = (Mono *) SafeRealloc(stack->data,
+                                           stack->capacity * (sizeof(Mono)));
     }
     stack->data[stack->size] = mono;
     stack->size++;

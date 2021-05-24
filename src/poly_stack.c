@@ -17,8 +17,8 @@ void PolyStackPush(PolyStack *stack, Poly poly) {
             stack->capacity = 1;
         else
             stack->capacity *= 2;
-        stack->data = (Poly*) SafeRealloc(stack->data,
-                                            stack->capacity * (sizeof(Poly)));
+        stack->data = (Poly *) SafeRealloc(stack->data,
+                                           stack->capacity * (sizeof(Poly)));
     }
     stack->data[stack->size] = poly;
     stack->size++;
@@ -30,20 +30,22 @@ Poly PolyStackPop(PolyStack *stack) {
     stack->size--;
     if (stack->size > 0 && stack->size <= (size_t) (stack->capacity / 4)) {
         stack->capacity = stack->size;
-        stack->data = (Poly*)
+        stack->data = (Poly *)
                 SafeRealloc(stack->data,
                             stack->size * (sizeof(Poly)));
     }
     return res;
 }
 
-Poly* PolyStackTop(PolyStack stack) {
+Poly *PolyStackTop(PolyStack stack) {
+    assert(stack.size >= 1);
     return &stack.data[stack.size - 1];
 }
 
 PolyPair DoublePolyStackTop(PolyStack stack) {
+    assert(stack.size >= 2);
     return (PolyPair) {.first = &stack.data[stack.size - 1],
-                       .second = &stack.data[stack.size - 2]};
+            .second = &stack.data[stack.size - 2]};
 }
 
 void PolyStackDestroy(PolyStack stack) {

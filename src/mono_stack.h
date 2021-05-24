@@ -4,10 +4,11 @@
 #include <stdlib.h>
 #include "poly.h"
 
+/** To jest struktura reprezentująca stos jednomianów. */
 typedef struct MonoStack {
-    Mono* data; // Tablica jednomianów znajdujących się na stosie
-    size_t size; // Liczba obecnie znajdujących się na stosie jednomianów
-    size_t capacity; // Liczba jednomianów dla których została zalokowana pamięć
+    Mono *data; ///< Tablica jednomianów znajdujących się na stosie
+    size_t size; ///< Liczba obecnie znajdujących się na stosie jednomianów
+    size_t capacity; ///< Liczba jednomianów dla których została zalokowana pamięć
 } MonoStack;
 
 /**
@@ -18,10 +19,10 @@ MonoStack NewMonoStack();
 
 /**
  * Wstawia jednomian na wierzchołek stosu.
- * @param[in]  stack : stos jednomianów
+ * @param[out]  stack : wskaźnik na stos jednomianów
  * @param[in]  poly : jednomian
  */
-void MonoStackPush(MonoStack* stack, Mono mono);
+void MonoStackPush(MonoStack *stack, Mono mono);
 
 /**
  * Zwalnia pamięć zaalokowaną przez stos.

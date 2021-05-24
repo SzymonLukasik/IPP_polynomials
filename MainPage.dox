@@ -7,8 +7,9 @@ Uwaga: aktualna treść zadania znajduje się w [Moodle](https://moodle.mimuw.ed
 
 ### Opis programu
 
-Tegoroczne duże zadanie polega na zaimplementowaniu operacji na wielomianach
-rzadkich wielu zmiennych.
+Tegoroczne duże zadanie polega na zaimplementowaniu biblioteki udostępniającej
+operacje na wielomianach rzadkich wielu zmiennych oraz
+kalkulator działający na wielomianach i stosujący odwrotną notację polską.
 
 ### Opis biblioteki
 
@@ -22,7 +23,10 @@ na takich wielomianach, czyli:
  - tworzenie wielomianu powstałego przez podstawienie za pierwszą zmienną konkretnej wartości
  - stwierdzenie czy dwa wielomiany są równe
 
-### Opis implementacji
+### Opis implementacji biblioteki
+
+W implementacji korzystamy z biblioteki safe_alloc.h - udostępniającej funkcje
+umożliwiające bezpieczną alokację pamięci.
 
 Wielomiany niebędące współczynnikami utworzone przez funkcje interfejsu
 zawierają tablicę jednomianów posortowaną rosnąco względem wykładników.
@@ -37,4 +41,84 @@ szerokości wielomianów pomnożonego przez kwadrat głębokości wielomianów.
 Funkcja mnożąca wielomiany działa w czasie proporcjonalnym do
 iloczynu szerokości wielomianów pomnożonego przez kwadrat głębokości wielomianów.
 
+### Opis interfejsu kalkulatora
+
+Program kalkulatora czyta dane wierszami ze standardowego wejścia.
+Wiersz zawiera wielomian lub polecenie do wykonania.
+
+Wielomian reprezentujemy jako stałą, jednomian lub sumę jednomianów.
+Stała jest liczbą całkowitą. Jednomian reprezentujemy jako parę (coeff,exp),
+gdzie współczynnik coeff jest wielomianem, a wykładnik exp jest liczbą nieujemną.
+Do wyrażenia sumy używamy znaku +.
+
+ - ZERO – wstawia na wierzchołek stosu wielomian tożsamościowo równy zeru;
+ - IS_COEFF – sprawdza, czy wielomian na wierzchołku stosu jest współczynnikiem – wypisuje na standardowe wyjście 0 lub 1;
+ - IS_ZERO – sprawdza, czy wielomian na wierzchołku stosu jest tożsamościowo równy zeru – wypisuje na standardowe wyjście 0 lub 1;
+ - CLONE – wstawia na stos kopię wielomianu z wierzchołka;
+ - ADD – dodaje dwa wielomiany z wierzchu stosu, usuwa je i wstawia na wierzchołek stosu ich sumę;
+ - MUL – mnoży dwa wielomiany z wierzchu stosu, usuwa je i wstawia na wierzchołek stosu ich iloczyn;
+ - NEG – neguje wielomian na wierzchołku stosu;
+ - SUB – odejmuje od wielomianu z wierzchołka wielomian pod wierzchołkiem, usuwa je i wstawia na wierzchołek stosu różnicę;
+ - IS_EQ – sprawdza, czy dwa wielomiany na wierzchu stosu są równe – wypisuje na standardowe wyjście 0 lub 1;
+ - DEG – wypisuje na standardowe wyjście stopień wielomianu (−1 dla wielomianu tożsamościowo równego zeru);
+ - DEG_BY idx – wypisuje na standardowe wyjście stopień wielomianu ze względu na zmienną o numerze idx (−1 dla wielomianu tożsamościowo równego zeru);
+ - AT x – wylicza wartość wielomianu w punkcie x, usuwa wielomian z wierzchołka i wstawia na stos wynik operacji;
+ - PRINT – wypisuje na standardowe wyjście wielomian z wierzchołka stosu;
+ - POP – usuwa wielomian z wierzchołka stosu.
+
+Program obsługuje pięć rodzajów błędów, jest to błąd STACK UNDERFLOW - zwracany w przypadku gdy
+ na stosie jest za mało wielomianów oraz 4 błędy wejścia:
+ - WRONG COMMAND - niepoprawna nazwa polecenia
+ - DEG BY WRONG VARIABLE - niepoprawny parametr polecenia DEG_BY lub jego brak
+ - AT WRONG VALUE - niepoprawny parametr polecenia AT lub jego brak
+ - WRONG POLY - niepoprawny wielomian
+
+W obsłudze kalkulatora ważna jest następująca zasada:
+Ignorujemy wiersze zaczynające się znakiem # i puste.
+Jeśli wiersz zaczyna się małą lub wielką literą alfabetu angielskiego, to uznajemy, że zawiera polecenie.
+W pozostałych przypadkach uznajemy, że wiersz opisuje wielomian.
+
+### Opis implementacji kalkulatora
+
+W implementacji kalkulatora korzystamy z dwóch dynamicznie alokowanych struktur danych
+ - PolyStack - struktura służąca do dodawania na stos oraz zdejmowania wielomianów ze sosu.
+ - MonoStack - struktura służąca do dodawania na stos jednomianów podczas parsowania wielomianu.
+
+Interfejs powyższych struktur jest udostępniany przez biblioteki poly_stack.h oraz mono_stack.h.
+
+Korzystamy także z biblioteki parsing.h - która udostępnia funkcję parsującą linię w wartość
+typu \a Action, która opisuje rodzaj czynności jaką powinien wykonać kalkulator po wczytaniu lini
+oraz jej specyfikację.
+
+Typ \a Action opisuje 4 rodzaje czynności:
+ - wykonanie polecenia
+ - bsłużenie błędu wejścia
+ - dodanie wielomianu na wierzchołek stosu
+ - zignorowanie wiersza
+
+Definicja typu \a Action, typów opisujących rodzaje poleceń, błędów wejścia
+oraz tablic zawierających na przykład napisy reprezentujące odpowiednie
+błędy bądź polecenia (takie tablice ułatwiają implementację parsowanie i wykonywania poleceń)
+znajduje się w pliku nagłówkowym calc.h
+
+Jak już zaznaczyliśmy w poprzedniej sekcji, obsługiwane błędy dzielimy na
+błąd STACK UNDERFLOW oraz 4 błędy wejścia.
+
+Dla ułatwienia implementacji dokonujemy kategoryzacji poleceń, ze względu na różne kryteria.
+
+Wyróżniamy 12 poleceń bezparametrowych - to znaczy wszystkie polecenia oprócz AT i DEG_BY.
+Wymienienie tych poleceń w definicji typu wyliczeniowego  CommandName, przed poleceniami AT
+oraz DEG_BY upraszcza implementację parsowania poleceń bezparamterowych.
+
+Dokonujemy również podziału poleceń ze względu na efekt ich wykonania:
+ - polecenie POP - skutkujące usunięciem wielomianu z wierzchołka stosu
+ - polecenia, które w implementacji określamy mianem "PushCommand" - skutkujące dodaniem wielomianu na stos, je z kolei dzielimy na:
+     - polecenie ZERO
+     - polecenia ADD, MUL, SUB - wymagające ściągnięcia ze stosu dwóch wielomianów, wykonania na nich operacji binarnej i dodania wyniku na stos
+     - polecenia CLONE, NEG, AT - wymagające wykonania na wielomianie z wierzchołka stosu
+                                     (w przypadku NEG i AT - wcześniejsze ściągnięcie tego wielomianu ze stosu) operacji unarnej i dodanie wyniku na stos
+ - polecenia, które w implemntacji określamy mianem "PrintCommand" - skutkujące wypisaniem na wyjście standardowe tekstu, je dzielimy na:
+     - polecenie PRINT
+     - polecenia DEG oraz DEG_BY, które w implementacji określamy mianem "DegCommand"
+     - polecenia IS_EQ, IS_COEFF oraz IS_ZERO, które w implentacji określamy mianem "BooleanCommand"
 */

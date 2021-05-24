@@ -18,9 +18,9 @@ do
 
     ./"$prog" < "$f" 1> "$my_out" 2> "$my_err"
 
-#    valgrind --error-exitcode=123 --leak-check=full --show-leak-kinds=all \
-#    --errors-for-leak-kinds=all ./"$prog" < "$f" > /dev/null 2>&1
-#    val_return=$?
+    valgrind --error-exitcode=123 --leak-check=full --show-leak-kinds=all \
+    --errors-for-leak-kinds=all ./"$prog" < "$f" > /dev/null 2>&1
+    val_return=$?
 
     if [[ "$val_return" == "123" ]]
         then val_return="ERROR"

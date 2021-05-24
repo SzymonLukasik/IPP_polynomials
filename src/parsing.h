@@ -1,14 +1,12 @@
 /** @file
   Biblioteka umożliwiająca parsowanie wiersza tekstu
-  w obiekt typu \a Action, czyli informację o rodzaju czynności,
+  w wartość typu \a Action, czyli informację o rodzaju czynności,
   którą powinien wykonać program po wczytaniu wiersza oraz jej
-  argumentach.
+  specyfikacji.
 
   @author Szymon Łukasik <sl428760@mimuw.students.edu.pl>
   @date 2021
 */
-#define _GNU_SOURCE
-
 
 #ifndef __PARSING_H__
 #define __PARSING_H__
@@ -16,11 +14,16 @@
 #include <sys/types.h>
 #include "calc.h"
 
-// Definicje stałych opisujących dozwolone wartości wykładnika jednomianu
-#define MIN_EXP 0
-#define MAX_EXP 2147483647
+/** Enum określający parsowane liczby. */
+typedef enum NumberType {
+    EXP, VAR_IDX, COEFF
+} NumberType;
 
-#define COEFF_FIRST_CHARS "-0123456789"
+/** Definicje makra opisującego minimalną wartość wykładnika jednomianu. */
+#define MIN_EXP 0
+
+/** Definicje makra opisującego maksymalną wartość wykładnika jednomianu. */
+#define MAX_EXP 2147483647
 
 /**
  * Analizuje wiersz tekstu i zwraca odpowiedni obiekt typu \a Action
