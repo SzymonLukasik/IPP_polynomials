@@ -34,11 +34,6 @@ set(SOURCE_FILES
     src/calc.c
     src/calc.h)
 
-#set(EXTENSION_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/testy-duze-zadanie-1/CMakeExtension.txt")
-#if (EXISTS "${EXTENSION_PATH}")
-#	include("${EXTENSION_PATH}")
-#endif ()
-
 # Wskazujemy plik wykonywalny.
 add_executable(poly ${SOURCE_FILES})
 
