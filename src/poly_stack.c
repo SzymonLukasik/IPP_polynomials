@@ -1,3 +1,9 @@
+/** @file
+  Implementacja biblioteki udostępniającej stos wielomianów.
+
+  @author Szymon Łukasik <sl428760@mimuw.students.edu.pl>
+  @date 2021
+*/
 #include <stdlib.h>
 
 #include "safe_alloc.h"
