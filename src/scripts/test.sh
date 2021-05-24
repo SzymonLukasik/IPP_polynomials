@@ -30,7 +30,7 @@ do
 
     diff "$out" "$my_out" > /dev/null 2>&1
     status[0]=$?
-    diff "$err" "$my_err" > /dev/null 2>&1
+    diff "$err" "$my_err"
     status[1]=$?
     test=${f#"$dir"}
 
