@@ -297,26 +297,22 @@ static void PolyParse(string line, Action *action) {
 }
 
 /**
- * Zwraca kopię fragmentu lini występującego po pierwszym od lewej znaku ' ',
- * czyli przy założeniu że linia opisuje polecenie AT lub DEG_BY -
- * zwraca kopię jej fragmentu, który reprezentuje parametr polecenia.
- * W przypadku gdy linia nie zawiera znaku ' ', zwraca NULL.
- * @param[in] line : rozważana linia.
- * @param[in] line_length : długość lini
- * @return Kopia fragmentu lini występującego po pierwszym od lewej znaku ' '
- *         lub NULL jeśli linia nie zawiera znaku ' '.
+ * Ustawia wartość wskaźnika line tak aby wskazywał na znak
+ * występujący po pierwszym  znaku ' ' napotkanym podczas
+ * przechodzenia po fragmencie lini, na który początkowo wskazuje line.
+ * Jeżeli linia nie zawiera znaku ' ', ustawia wartość wskaźnika line
+ * na NULL.
+ * @param[in, out] line : wskaźnik na fragment rozważanej lini
  */
-static string GetParameter(string line, size_t line_length) {
-    int i = 0;
-    while (line[i] != ' ' && line[i] != '\0')
-        i++;
+static void ShiftToParameter(string *line) {
+    string my_line = *line;
+    while (my_line[0] != ' ' && my_line[0] != '\0')
+        my_line++;
 
-    if (line[i] == '\0')
-        return NULL;
-
-    string res = malloc(line_length - i + 1);
-    strcpy(res, line + i + 1);
-    return res;
+    if (my_line[0] == '\0')
+        *line = NULL;
+    else
+        *line = my_line + 1;
 }
 
 /**
@@ -327,15 +323,14 @@ static string GetParameter(string line, size_t line_length) {
  * ustawia jest to opis błędu wejścia - niepoprawny parametr bądź jego brak).
  * Jeśli nie należy, zwraca fałsz.
  * @param[in] line : rozważana linia
- * @param[in] line_length : długość lini
  * @param[out] action : wskaźnik na zmienną typu \a Action
  * @return Czy linię należy interpretować jako polecenie DEG_BY?
  */
-static bool IsDegBy(string line, Action *action, size_t line_length) {
+static bool IsDegBy(string line, Action *action) {
     if (strncmp(line, "DEG_BY", 6) == 0
-        && (line[6] == '\n' || line[6] == ' ')) {
-        string param = GetParameter(line, line_length);
-        if (NumberTryToParse(param, VAR_IDX,
+        && (line[6] == '\n' || line[6] == ' ' || line[6] == '\t')) {
+        ShiftToParameter(&line);
+        if (NumberTryToParse(line, VAR_IDX,
                              &action->spec.command.param.var_idx,
                              NULL, '\n')) {
             action->type = COMMAND;
@@ -344,7 +339,6 @@ static bool IsDegBy(string line, Action *action, size_t line_length) {
             action->type = INPUT_ERROR;
             action->spec.error = DEG_BY_WRONG_VARIABLE;
         }
-        free(param);
         return true;
     }
     return false;
@@ -357,16 +351,15 @@ static bool IsDegBy(string line, Action *action, size_t line_length) {
  * czynności argumentowi action (jeśli parsowanie się nie powiedzie
  * ustawia jest to opis błędu wejścia - niepoprawny parametr bądź jego brak).
  * @param[in] line : rozważana linia
- * @param[in] line_length : długość lini
  * @param[out] action : wskaźnik na zmienną typu \a Action
  * @return Czy linię należy interpretować jako polecenie AT?
  */
-static bool IsAt(string line, size_t line_length, Action *action) {
+static bool IsAt(string line, Action *action) {
     if (strncmp(line, "AT", 2) == 0
-        && (line[2] == '\n' || line[2] == ' ')) {
-        string param = GetParameter(line, line_length);
+        && (line[2] == '\n' || line[2] == ' ' || line[2] == '\t')) {
+        ShiftToParameter(&line);
         // Dokonujemy próby parsowania parametru
-        if (NumberTryToParse(param, COEFF, &action->spec.command.param.x,
+        if (NumberTryToParse(line,COEFF, &action->spec.command.param.x,
                              NULL, '\n')) {
             action->type = COMMAND;
             action->spec.command.name = AT;
@@ -374,8 +367,7 @@ static bool IsAt(string line, size_t line_length, Action *action) {
             action->type = INPUT_ERROR;
             action->spec.error = AT_WRONG_VALUE;
         }
-        // Zwalniamy pamięć zaalokowaną przez funkcję GetParameter.
-        free(param);
+        // Zwalniamy pamięć zaalokowaną przez funkcję ShiftToParameter.
         return true;
     }
     return false;
@@ -421,14 +413,13 @@ static bool IsFirstCharLatinLetter(string line) {
  * Zwraca prawdę jeśli jest się ona udała i fałsz w przeciwnym przypadku.
  * Ustawia odpowiedni rodzaj i specyfikację czynności argumentowi action.
  * @param[in] line : rozważana linia
- * @param[in] line_length : długość lini
  * @param[out] action : wskaźnik na zmienną typu \a Action
  * @return Czy udało się sparsować linię jako polecenie?
  */
-static bool CommandTryToParse(string line, size_t line_length, Action *action) {
+static bool CommandTryToParse(string line, Action *action) {
     if (IsNoParamCommand(line, action)
-        || IsDegBy(line, action, line_length)
-        || IsAt(line, line_length, action))
+        || IsDegBy(line, action)
+        || IsAt(line, action))
         return true;
     return false;
 }
@@ -440,15 +431,14 @@ static bool CommandTryToParse(string line, size_t line_length, Action *action) {
  * (jeśli parsowanie się nie powiedzie jest to opis błędu wejścia -
  *  niepoprawna nazwa polecenia)
  * @param[in] line : rozważana linia
- * @param[in] line_length : długość lini
  * @param[out] action : wskaźnik na zmienną typu \a Action
  * @return Czy program traktuję linie jako polecenie?
  */
-static bool IsCommand(string line, size_t line_length, Action *action) {
+static bool IsCommand(string line, Action *action) {
     // Linia jest poleceniem jeśli jej pierwszy znak to litera alfabetu ang.
     if (IsFirstCharLatinLetter(line)) {
 
-        if (!CommandTryToParse(line, line_length, action)) {
+        if (!CommandTryToParse(line, action)) {
             action->type = INPUT_ERROR;
             action->spec.error = WRONG_COMMAND;
         }
@@ -485,7 +475,7 @@ Action ParseLine(string line, ssize_t line_length) {
         strcat(line, "\n");
 
     // Jeśli linia jest poleceniem, parsujemy ją.
-    if (IsCommand(line, line_length, &action))
+    if (IsCommand(line, &action))
         return action;
 
     // Parsujemy linię jako wielomian.
