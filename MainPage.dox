@@ -116,7 +116,7 @@ Dokonujemy również podziału poleceń ze względu na efekt ich wykonania:
      - polecenie ZERO
      - polecenia ADD, MUL, SUB - wymagające ściągnięcia ze stosu dwóch wielomianów, wykonania na nich operacji binarnej i dodania wyniku na stos
      - polecenia CLONE, NEG, AT - wymagające wykonania na wielomianie z wierzchołka stosu
-                                     (w przypadku NEG i AT - wcześniejsze ściągnięcie tego wielomianu ze stosu) operacji unarnej i dodanie wyniku na stos
+                                  (w przypadku NEG i AT - wszcześniej ściągamy ten wielomian ze stosu) operacji unarnej i dodanie wyniku na stos
  - polecenia, które w implemntacji określamy mianem "PrintCommand" - skutkujące wypisaniem na wyjście standardowe tekstu, je dzielimy na:
      - polecenie PRINT
      - polecenia DEG oraz DEG_BY, które w implementacji określamy mianem "DegCommand"
