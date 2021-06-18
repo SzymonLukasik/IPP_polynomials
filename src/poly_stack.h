@@ -34,14 +34,14 @@ PolyStack NewPolyStack();
 
 /**
  * Wstawia wielomian na wierzchołek stosu.
- * @param[out]  stack : wskaźnik na stos wielomianów
+ * @param[in, out]  stack : wskaźnik na stos wielomianów
  * @param[in]  poly : wielomian
  */
 void PolyStackPush(PolyStack *stack, Poly poly);
 
 /**
- * Usuwa wielomian z wierzchołka stosu oraz zwraca do niego wskaźnik.
- * @param[in]  stack : stos wielomianów z usuniętym wierzchołkiem
+ * Usuwa wielomian z wierzchołka stosu oraz zwraca go.
+ * @param[in, out]  stack : stos wielomianów z usuniętym wierzchołkiem
  * @return wielomian z wierzchołka stosu
  */
 Poly PolyStackPop(PolyStack *stack);

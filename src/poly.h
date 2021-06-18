@@ -230,4 +230,40 @@ Poly PolyAt(const Poly *p, poly_coeff_t x);
  */
 void Print(Poly p);
 
+/**
+ * Sumuje listę jednomianów i tworzy z nich wielomian. Przejmuje na własność
+ * pamięć wskazywaną przez @p monos i jej zawartość. Może dowolnie modyfikować
+ * zawartość tej pamięci. Zakładamy, że pamięć wskazywana przez @p monos
+ * została zaalokowana na stercie. Jeśli @p count lub @p monos jest równe zeru
+ * (NULL), tworzy wielomian tożsamościowo równy zeru.
+ * @param[in] count : liczba jednomianów
+ * @param[in] monos : tablica jednomianów
+ * @return wielomian będący sumą jednomianów
+ */
+Poly PolyOwnMonos(size_t count, Mono *monos);
+
+/**
+ * Sumuje listę jednomianów i tworzy z nich wielomian. Nie modyfikuje zawartości
+ * tablicy @p monos. Jeśli jest to wymagane, to wykonuje pełne kopie jednomianów
+ * z tablicy @p monos. Jeśli @p count lub @p monos jest równe zeru (NULL),
+ * tworzy wielomian tożsamościowo równy zeru.
+ * @param[in] count : liczba jednomianów
+ * @param[in] monos : tablica jednomianów
+ * @return wielomian będący sumą jednomianów
+ */
+Poly PolyCloneMonos(size_t count, const Mono monos[]);
+
+/**
+ * Dokonuje złożenia wielomianu @p p z wielomianami umieszczonymi w talicy @p q.
+ * Niech @f$ l @f$ oznacza liczbę zmiennych wielomianu @p.
+ * Za zmienne wielomianu @f$ x_0, x_1, \dots, x_{\mathrm{min}(k, l)-1} @f$ podstawiamy
+ * kolejne wielomiany z tablicy @p q. Jeśli @f$ k < l @f$, pod zmienne
+ * @f$ x_k, x_{k+1}, \dots, x_{l-1} @f$ podstawiamy zera.
+ * @param[in/out] p wielomian
+ * @param[in] k wielkość tablicy @p q
+ * @param[in] q tablica wielomianów
+ * @return wielomian będący wynikiem złożenia
+ */
+Poly PolyCompose(const Poly *p, size_t k, const Poly q[]);
+
 #endif // __POLY_H__

@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include "poly.h"
 #include "safe_alloc.h"
+#include "math.h"
 
 void PolyDestroy(Poly *p) {
     if (!PolyIsCoeff(p)) {
@@ -220,14 +221,9 @@ static Poly PolyAddMonosBrute(size_t count, const Mono monos[]) {
     return p;
 }
 
-/**
-* Sumuje listę jednomianów i tworzy z nich wielomian.
-* Nie przejmuje na własność zawartość tablicy @p monos.
-* @param[in] count : liczba jednomianów
-* @param[in] monos : tablica jednomianów
-* @return wielomian będący sumą jednomianów
-*/
-static Poly PolyAddMonosNoOwnershipTransfer(size_t count, const Mono monos[]) {
+Poly PolyCloneMonos(size_t count, const Mono monos[]) {
+    if(count == 0 || monos == NULL)
+        return PolyZero();
 
     SortMono(count, (Mono *) monos);
     Poly p = PolyAddMonosBrute(count, monos);
@@ -257,7 +253,7 @@ Poly PolyAdd(const Poly *p, const Poly *q) {
         count = p->size + q->size;
     }
 
-    Poly p_sum = PolyAddMonosNoOwnershipTransfer(count, monos);
+    Poly p_sum = PolyCloneMonos(count, monos);
     free(monos);
 
     return p_sum;
@@ -270,7 +266,7 @@ Poly PolyAddMonos(size_t count, const Mono monos[]) {
     // Kopiujemy tablicę monos.
     Mono *monos_copy = MergeMonoArrays(NULL, (Mono *) monos, 0, count);
 
-    Poly p = PolyAddMonosNoOwnershipTransfer(count, monos_copy);
+    Poly p = PolyCloneMonos(count, monos_copy);
     free(monos_copy);
     for (size_t i = 0; i < count; i++)
         MonoDestroy((Mono *) &monos[i]);
@@ -501,4 +497,95 @@ void Print(Poly p) {
                 printf("+");
         }
     }
+}
+
+Poly PolyOwnMonos(size_t count, Mono *monos) {
+        if(count == 0 || monos == NULL)
+            return PolyZero();
+
+        Poly p = PolyAddMonos(count, monos);
+        free(monos);
+
+        return p;
+}
+
+/**
+ * Zwraca wieolomian @p p podniesiony do potęgi @p exp.
+ * Wykorzystuje algorytm szybkiego potęgowania.
+ * @param[in] p : potęgowana wielomian
+ * @param[in] exp : wykładnik potęgi
+ * @return @f$ p^{exp}(x) @f$
+ */
+static Poly PolyExponantiate(Poly p, poly_exp_t exp) {
+    if (exp == 0)
+        return PolyFromCoeff(1);
+
+    Poly temp = PolyExponantiate(p, exp / 2);
+    Poly res = PolyMul(&temp, &temp);
+    if (exp % 2 != 0)
+        res = PolyMul(&res, &p);
+    PolyDestroy(&temp);
+
+    return res;
+}
+
+/**
+ * Zwraca mniejszą z dwóch wartości.
+ * @param[in] a : pierwsza wartość
+ * @param[in] b : druga wartość
+ * @return @f$ \mathrm{min}(a, b) @f$
+ */
+static size_t  min(size_t a, size_t b) {
+    if (a < b)
+        return a;
+    return b;
+}
+
+static void MulSecondVar(Poly second_var_p, Poly *res) {
+    if(PolyIsCoeff(res)) {
+        if(!PolyIsZero(res)) {
+            Poly coeff = PolyFromCoeff(res->coeff);
+            Poly p_mul = PolyMul(&second_var_p, &coeff);
+            Mono mono = MonoFromPoly(&p_mul, 0);
+            res->size = 1;
+            res->arr = &mono;
+        }
+    } else {
+        for (int i = 0; i < res->size; i++)
+            res->arr[i].p = PolyMul(&second_var_p, &res->arr[i].p);
+    }
+}
+
+static Poly PolyAddPolys(size_t count, Poly* polys) {
+    assert(count > 0);
+
+    Poly res = polys[0];
+    for(size_t i = 1; i < count; i++)
+        res = PolyAdd(&res, &polys[i]);
+
+    for(size_t i = 0; i < count; i++)
+        PolyDestroy(&polys[i]);
+    free(polys);
+
+    return res;
+}
+
+
+Poly PolyCompose(const Poly *p, size_t k, const Poly* q) {
+    if (PolyIsCoeff(p))
+        return *p;
+
+    if (k == 0)
+        return PolyZero();
+
+    Poly* polys = SafeCalloc(p->size, sizeof(Poly));
+    for(size_t i = 0; i < min(k, p->size); i++) {
+        Poly new_coeff = PolyCompose((const Poly *) &p->arr[i], k - 1, q + 1);
+        Poly var_poly = PolyExponantiate(q[i], p->arr[i].exp);
+        MulSecondVar(new_coeff, &var_poly);
+        polys[i] = var_poly;
+    }
+    PolyDestroy((Poly*) p);
+
+    return PolyAddPolys(p->size, polys);
 }
