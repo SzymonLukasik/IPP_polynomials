@@ -46,18 +46,19 @@ static bool IsPushCommand(Command command) {
     return false;
 }
 
-static bool ExecuteComposeCommand(Command command, PolyStack *stack, size_t line_nr,
-                                  Poly *res) {
+static bool
+ExecuteComposeCommand(Command command, PolyStack *stack, size_t line_nr,
+                      Poly *res) {
     size_t k = command.param.k;
-    if(k == ULLONG_MAX) {
+    if (k == ULLONG_MAX) {
         fprintf(stderr, "ERROR %zu STACK UNDERFLOW\n", line_nr);
         return false;
     }
-    if(StackContains(k + 1, *stack, line_nr)) {
-        Poly* polys = PolysStackPop(stack, k + 1);
+    if (StackContains(k + 1, *stack, line_nr)) {
+        Poly *polys = PolysStackPop(stack, k + 1);
         Poly p = polys[k];
         *res = PolyCompose(&p, k, polys);
-        for(size_t i = 0; i < k + 1; i++)
+        for (size_t i = 0; i < k + 1; i++)
             PolyDestroy(polys + i);
         free(polys);
         return true;
@@ -224,7 +225,7 @@ static void PrintZeroOrOne(bool statement) {
  */
 static bool CompareTopPolynomials(PolyStack stack) {
     assert(stack.size >= 2);
-    Poly* polys  = PolysStackTop(stack, 2);
+    Poly *polys = PolysStackTop(stack, 2);
     return PolyIsEq(polys + 0, polys + 1);
 }
 

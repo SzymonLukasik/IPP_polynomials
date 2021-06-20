@@ -7,7 +7,6 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdarg.h> // Delete later
 #include "poly.h"
 #include "safe_alloc.h"
 
@@ -222,7 +221,7 @@ static Poly PolyAddMonosBrute(size_t count, const Mono monos[]) {
 }
 
 Poly PolyCloneMonos(size_t count, const Mono monos[]) {
-    if(count == 0 || monos == NULL)
+    if (count == 0 || monos == NULL)
         return PolyZero();
 
     SortMono(count, (Mono *) monos);
@@ -500,7 +499,7 @@ void Print(Poly p) {
 }
 
 Poly PolyOwnMonos(size_t count, Mono *monos) {
-    if(count == 0 || monos == NULL)
+    if (count == 0 || monos == NULL)
         return PolyZero();
 
     Poly p = PolyAddMonos(count, monos);
@@ -532,118 +531,78 @@ static Poly PolyExponantiate(Poly p, poly_exp_t exp) {
     return res;
 }
 
-static Poly PolyAddPolys(size_t count, Poly* polys) {
+/**
+ * Dodaje dwa wielomiany. Zwalnia pamięć przez nie zajmowaną.
+ * @param[in, out] p : wielomian @f$p@f$
+ * @param[in, out] q : wielomian @f$q@f$
+ * @return @f$p * q@f$
+ */
+static Poly PolyAddDestroyArgs(Poly *p, Poly *q) {
+    Poly res = PolyAdd(p, q);
+    PolyDestroy(p);
+    PolyDestroy(q);
+    return res;
+}
+
+/**
+ * Dodaje wielomiany zawarte w tablicy @p polys.
+ * Zakłada, że tablica jest niepusta.
+ * @param count : rozmiar tablicy
+ * @param polys : tablica wielomianów
+ * @return wynik dodania wielomianów z tablicy @p polys
+ */
+static Poly PolyAddPolys(size_t count, Poly *polys) {
     assert(count > 0);
-
     Poly res = PolyZero();
-    for(size_t i = 0; i < count; i++) {
-        Poly temp = res;
-        res = PolyAdd(&temp, &polys[i]);
-        PolyDestroy(&temp);
-    }
-
-    for(size_t i = 0; i < count; i++)
-        PolyDestroy(&polys[i]);
-
+    for (size_t i = 0; i < count; i++)
+        res = PolyAddDestroyArgs(&res, &polys[i]);
     free(polys);
 
     return res;
 }
 
+/**
+ * Zwraca wynik operacji compose na wielomianie @p w przypadku gdy
+ * parametr k jest równy zero.
+ * @param p : wielomian
+ * @return Wynik operacji compose w przypadku gdy parametr k jest równy zero
+ */
+static Poly PolyComposeNoArgs(const Poly *p) {
+    if(PolyIsCoeff(p))
+        return *p;
+    if (p->arr[0].exp == 0)
+        return PolyComposeNoArgs(&p->arr[0].p);
+    else
+        return PolyZero();
+}
 
-Poly PolyCompose(const Poly *p, size_t k, const Poly* q) {
+/**
+ * Mnoży dwa wielomiany. Zwalnia pamięć przez nie zajmowaną.
+ * @param[in, out] p : wielomian @f$p@f$
+ * @param[in, out] q : wielomian @f$q@f$
+ * @return @f$p * q@f$
+ */
+static Poly PolyMulDestroyArgs(Poly *p, Poly *q) {
+    Poly res = PolyMul(p, q);
+    PolyDestroy(p);
+    PolyDestroy(q);
+    return res;
+}
+
+
+Poly PolyCompose(const Poly *p, size_t k, const Poly *q) {
     if (PolyIsCoeff(p))
         return *p;
+    if (k == 0)
+        return PolyComposeNoArgs(p);
 
-    if (k == 0 ) {
-        if (p->arr[0].exp == 0)
-            return PolyCompose(&p->arr[0].p, 0, q);
-        else
-            return PolyZero();
-    }
-
-    Poly* polys = SafeCalloc(p->size, sizeof(Poly));
-    for(size_t i = 0; i < p->size; i++) {
+    Poly *polys = SafeCalloc(p->size, sizeof(Poly));
+    for (size_t i = 0; i < p->size; i++) {
         Poly coeff_poly = PolyCompose(&p->arr[i].p, k - 1, q + 1);
         Poly var_poly = PolyExponantiate(q[0], p->arr[i].exp);
-
-        Poly temp = var_poly;
-        var_poly = PolyMul(&coeff_poly, &temp);
-        PolyDestroy(&temp);
-        PolyDestroy(&coeff_poly);
-
+        var_poly = PolyMulDestroyArgs(&coeff_poly, &var_poly);
         polys[i] = var_poly;
     }
 
     return PolyAddPolys(p->size, polys);
 }
-
-
-// Funkcje pomocnicze do szybkiego przetestowania.
-
-#define CHECK_PTR(p)    	\
-	do {			    	\
-		if (p == NULL) {	\
-			exit(1);		\
-		}					\
-	} while (0)
-
-Poly MakePolyHelper(poly_exp_t dummy, ...) {
-    va_list list;
-    va_start(list, dummy);
-    size_t count = 0;
-    while (true) {
-        va_arg(list, Poly);
-        if (va_arg(list, poly_exp_t) < 0)
-            break;
-        count++;
-    }
-    va_start(list, dummy);
-    Mono *arr = calloc(count, sizeof (Mono));
-    CHECK_PTR(arr);
-    for (size_t i = 0; i < count; ++i) {
-        Poly p = va_arg(list, Poly);
-        arr[i] = MonoFromPoly(&p, va_arg(list, poly_exp_t));
-        // assert(i == 0 || MonoGetExp(&arr[i]) > MonoGetExp(&arr[i - 1]));
-    }
-    va_end(list);
-    Poly res = PolyAddMonos(count, arr);
-    free(arr);
-    return res;
-}
-#define C PolyFromCoeff
-
-#define P(...) MakePolyHelper(0, __VA_ARGS__, PolyZero(), -1)
-
-Mono M(Poly p, poly_exp_t n);
-
-/* int main() {
-    Poly a = P(P(P(C(1), 6), 5), 2, P(C(1), 0, C(1), 2), 3, C(5), 7);
-
-    Poly b [2] = {P(C(1), 4), P(P(C(1), 0, C(1), 1), 1)};
-
-    Poly c = PolyCompose(&a, 2, &b);
-
-    printf("Wielomian a: \n");
-    Print(a);
-    printf("\n");
-
-    printf("Wielomian b_1: \n");
-    Print(*b);
-    printf("\n");
-
-
-    printf("Wielomian b_2: \n");
-    Print(b[1]);
-    printf("\n");
-
-
-    printf("\n");
-    printf("Wielomian c: \n");
-    Print(c);
-
-    PolyDestroy(&a);
-    PolyDestroy(&b);
-    PolyDestroy(&(b[1]));
-    PolyDestroy(&c);
-} */

@@ -57,7 +57,7 @@ Poly *PolyStackTop(PolyStack stack);
  * @param[in] k : liczba wielomianów
  * @return tablica wielomianów
  */
-Poly* PolysStackTop(PolyStack stack, size_t k);
+Poly *PolysStackTop(PolyStack stack, size_t k);
 
 /**
  * Zwraca tablicę @p polys zawierającą @p k wielomianów z wierzchu stosu,
@@ -70,7 +70,7 @@ Poly* PolysStackTop(PolyStack stack, size_t k);
  * @param[in] k : liczba wielomianów
  * @return tablica wielomianów
  */
-Poly* PolysStackPop(PolyStack* stack, size_t k);
+Poly *PolysStackPop(PolyStack *stack, size_t k);
 
 /**
  * Zwalnia pamięć zaalokowaną przez stos.

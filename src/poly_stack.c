@@ -48,20 +48,18 @@ Poly *PolyStackTop(PolyStack stack) {
     return &stack.data[stack.size - 1];
 }
 
-Poly* PolysStackTop(PolyStack stack, size_t k) {
+Poly *PolysStackTop(PolyStack stack, size_t k) {
     assert(stack.size >= k);
-    Poly* polys = SafeCalloc(k, sizeof(Poly));
-    for(size_t i = 1; i <= k; i++)
+    Poly *polys = SafeCalloc(k, sizeof(Poly));
+    for (size_t i = 1; i <= k; i++)
         polys[k - i] = stack.data[stack.size - i];
-
     return polys;
 }
 
-Poly* PolysStackPop(PolyStack* stack, size_t k) {
-    Poly* polys = PolysStackTop(*stack, k);
-    while(k--)
+Poly *PolysStackPop(PolyStack *stack, size_t k) {
+    Poly *polys = PolysStackTop(*stack, k);
+    while (k--)
         PolyStackPop(stack);
-
     return polys;
 }
 

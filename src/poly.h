@@ -237,7 +237,7 @@ void Print(Poly p);
  * została zaalokowana na stercie. Jeśli @p count lub @p monos jest równe zeru
  * (NULL), tworzy wielomian tożsamościowo równy zeru.
  * @param[in] count : liczba jednomianów
- * @param[in] monos : tablica jednomianów
+ * @param[in, out] monos : tablica jednomianów
  * @return wielomian będący sumą jednomianów
  */
 Poly PolyOwnMonos(size_t count, Mono *monos);
@@ -255,11 +255,11 @@ Poly PolyCloneMonos(size_t count, const Mono monos[]);
 
 /**
  * Dokonuje złożenia wielomianu @p p z wielomianami umieszczonymi w talicy @p q.
- * Niech @f$ l @f$ oznacza liczbę zmiennych wielomianu @p.
+ * Niech @f$ l @f$ oznacza liczbę zmiennych wielomianu @p p.
  * Za zmienne wielomianu @f$ x_0, x_1, \dots, x_{\mathrm{min}(k, l)-1} @f$ podstawiamy
  * kolejne wielomiany z tablicy @p q. Jeśli @f$ k < l @f$, pod zmienne
  * @f$ x_k, x_{k+1}, \dots, x_{l-1} @f$ podstawiamy zera.
- * @param[in/out] p wielomian
+ * @param[in] p wielomian
  * @param[in] k wielkość tablicy @p q
  * @param[in] q tablica wielomianów
  * @return wielomian będący wynikiem złożenia
