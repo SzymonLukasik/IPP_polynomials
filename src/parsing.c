@@ -394,7 +394,7 @@ static bool IsCompose(string line, Action *action) {
             action->spec.command.name = COMPOSE;
         } else {
             action->type = INPUT_ERROR;
-            action->spec.error = AT_WRONG_VALUE;
+            action->spec.error = COMPOSE_WRONG_PARAMATER;
         }
         return true;
     }

@@ -555,8 +555,12 @@ Poly PolyCompose(const Poly *p, size_t k, const Poly* q) {
     if (PolyIsCoeff(p))
         return *p;
 
-    if (k == 0)
-        return PolyZero();
+    if (k == 0 ) {
+        if (p->arr[0].exp == 0)
+            return PolyCompose(&p->arr[0].p, 0, q);
+        else
+            return PolyZero();
+    }
 
     Poly* polys = SafeCalloc(p->size, sizeof(Poly));
     for(size_t i = 0; i < p->size; i++) {

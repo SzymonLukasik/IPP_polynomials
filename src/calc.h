@@ -74,7 +74,7 @@ static const size_t INPUT_ERR_NUM = 5;
  *  występowania w definicji typu InputError. */
 static const string INPUT_ERR_NAMES[5] =
         {"WRONG COMMAND", "DEG BY WRONG VARIABLE",
-         "AT WRONG VALUE", "COMPOSE_WRONG_PARAMATER", "WRONG POLY"};
+         "AT WRONG VALUE", "COMPOSE WRONG PARAMETER", "WRONG POLY"};
 
 /** Enum określający rodzaj czynności,
  * jaką powinien wykonać program po wczytaniu wiersza. */
