@@ -18,14 +18,6 @@ typedef struct PolyStack {
     size_t capacity; ///< Liczba wielomianów dla których została zalokowana pamięć
 } PolyStack;
 
-
-/** To jest struktura reprezentująca parę wielomianów.
- *  Używamy jej do pobierania dwóch wielomianów z wierzchu stosu. */
-typedef struct PolyPair {
-    Poly *first; ///< Pierwszy wielomian pary
-    Poly *second; ///< Drugi wielomian pary
-} PolyPair;
-
 /**
  * Tworzy pusty stos wielomianów.
  * @return pusty stos wielomianóœ
@@ -56,15 +48,29 @@ Poly PolyStackPop(PolyStack *stack);
 Poly *PolyStackTop(PolyStack stack);
 
 /**
- * Zwraca parę pair wielomianów z wierzchu stosu, gdzie
- * pair.first to wielomian z wierzchołka, a pair.second
- * to wielomian pod wierzchołkiem. Zakłada, że stos
- * zawiera co najmniej dwa wielomiany.
+ * Zwraca tablicę @p polys zawierającą @p k wielomianów z wierzchu stosu,
+ * gdzie @p polys[k-1] to wielomian z wierzchołka,
+ * @p polys[k-2] to wielomian pod wierzchołkiem, itd.
+ * Zakłada, że stos zawiera co najmniej @p k wielomianów.
  * @param[in] stack : stos wielomianów zawierający co najmniej
- *                    dwa wielomiany.
- * @return para wielomianów
+ * @p k wielomianów.
+ * @param[in] k : liczba wielomianów
+ * @return tablica wielomianów
  */
-PolyPair DoublePolyStackTop(PolyStack stack);
+Poly* PolysStackTop(PolyStack stack, size_t k);
+
+/**
+ * Zwraca tablicę @p polys zawierającą @p k wielomianów z wierzchu stosu,
+ * gdzie @p polys[k-1] to wielomian z wierzchołka,
+ * @p polys[k-2] to wielomian pod wierzchołkiem, itd.
+ * Zdejmuje pierwsze @p k wielomianów ze stosu.
+ * Zakłada, że stos zawiera co najmniej @p k wielomianów.
+ * @param[in] stack : stos wielomianów zawierający co najmniej
+ * @p k wielomianów.
+ * @param[in] k : liczba wielomianów
+ * @return tablica wielomianów
+ */
+Poly* PolysStackPop(PolyStack* stack, size_t k);
 
 /**
  * Zwalnia pamięć zaalokowaną przez stos.

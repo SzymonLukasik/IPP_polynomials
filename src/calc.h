@@ -16,13 +16,13 @@ typedef char *string;
 
 /** Enum określający dostepne polecenia. */
 typedef enum CommandName {
-    /* Polecenia AT oraz DEG_BY- jedyne, które wymagają parametrów
+    /* Polecenia AT, DEG_BY oraz COMPOSE- jedyne, które wymagają parametrów
      * zostały wymienione jako ostatnie - dzięki temu możemy skorzystać
      * z wartości stałych opisujących polecenia bezparametrowe podczas
      * parsowania w pliku parsing.c w funkcji IsNoParamCommand. */
     ZERO, IS_COEFF, IS_ZERO, CLONE, ADD, MUL,
     NEG, SUB, IS_EQ, DEG, PRINT, POP,
-    AT, DEG_BY
+    AT, DEG_BY, COMPOSE
 } CommandName;
 
 /** Liczba poleceń bezparametrowych. */
@@ -40,17 +40,18 @@ static const string NO_PARAM_COMM_NAMES[12] =
 
 /** Liczba poleceń rodzaju PushCommand - skutkujących dodaniem
  * wielomianu na stos . */
-static const size_t PUSH_COMM_NUM = 7;
+static const size_t PUSH_COMM_NUM = 8;
 
 /** Tablica zawierająca te wartości typu CommandName, które opisują
  *  polecenia rodzaju PushCommand */
-static const CommandName PUSH_COMMANDS[7] =
-        {ZERO, CLONE, ADD, MUL, NEG, SUB, AT};
+static const CommandName PUSH_COMMANDS[8] =
+        {ZERO, CLONE, ADD, MUL, NEG, SUB, AT, COMPOSE};
 
 /** Unia określająca parametr poleceń AT lub DEG_BY. */
 typedef union CommandParam {
     poly_coeff_t x; ///< Parametr polecenia AT
     size_t var_idx; ///< Parametr polecenia DEG_BY
+    size_t k; ///< Parametr polecenia COMPOSE
 } CommandParam;
 
 /** Struktura określająca nazwę polecenia wraz z parametrem
@@ -63,17 +64,17 @@ typedef struct Command {
 /** Enum określający obsługiwane błędy wejścia. */
 typedef enum InputError {
     WRONG_COMMAND, DEG_BY_WRONG_VARIABLE,
-    AT_WRONG_VALUE, WRONG_POLY
+    AT_WRONG_VALUE, COMPOSE_WRONG_PARAMATER, WRONG_POLY
 } InputError;
 
 /** Liczba obsługiwanych błędów wejścia. */
-static const size_t INPUT_ERR_NUM = 4;
+static const size_t INPUT_ERR_NUM = 5;
 /** Tablica stringów zawierająca nazwy błędów wyjścia.
  *  Kolejność nazw tych błędów w tablicy odpowiada kolejności ich
  *  występowania w definicji typu InputError. */
-static const string INPUT_ERR_NAMES[4] =
+static const string INPUT_ERR_NAMES[5] =
         {"WRONG COMMAND", "DEG BY WRONG VARIABLE",
-         "AT WRONG VALUE", "WRONG POLY"};
+         "AT WRONG VALUE", "COMPOSE_WRONG_PARAMATER", "WRONG POLY"};
 
 /** Enum określający rodzaj czynności,
  * jaką powinien wykonać program po wczytaniu wiersza. */
@@ -98,11 +99,5 @@ typedef struct Action {
     ActionType type; ///< Rodzaj czynności
     ActionSpec spec; ///< Specyfikacja czynności
 } Action;
-
-/** Enum określający minimalną liczbę wielomianów, które muszą być na stosie
- *  aby program mógł wykonać polecenie. */
-typedef enum MinimStackSize {
-    ONE = 1, TWO = 2
-} MinimalStackSize;
 
 #endif // __CALC_H__

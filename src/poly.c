@@ -7,9 +7,9 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h> // Delete later
 #include "poly.h"
 #include "safe_alloc.h"
-#include "math.h"
 
 void PolyDestroy(Poly *p) {
     if (!PolyIsCoeff(p)) {
@@ -500,13 +500,13 @@ void Print(Poly p) {
 }
 
 Poly PolyOwnMonos(size_t count, Mono *monos) {
-        if(count == 0 || monos == NULL)
-            return PolyZero();
+    if(count == 0 || monos == NULL)
+        return PolyZero();
 
-        Poly p = PolyAddMonos(count, monos);
-        free(monos);
+    Poly p = PolyAddMonos(count, monos);
+    free(monos);
 
-        return p;
+    return p;
 }
 
 /**
@@ -522,49 +522,29 @@ static Poly PolyExponantiate(Poly p, poly_exp_t exp) {
 
     Poly temp = PolyExponantiate(p, exp / 2);
     Poly res = PolyMul(&temp, &temp);
-    if (exp % 2 != 0)
-        res = PolyMul(&res, &p);
+    if (exp % 2 != 0) {
+        PolyDestroy(&temp);
+        temp = res;
+        res = PolyMul(&temp, &p);
+    }
     PolyDestroy(&temp);
 
     return res;
 }
 
-/**
- * Zwraca mniejszą z dwóch wartości.
- * @param[in] a : pierwsza wartość
- * @param[in] b : druga wartość
- * @return @f$ \mathrm{min}(a, b) @f$
- */
-static size_t  min(size_t a, size_t b) {
-    if (a < b)
-        return a;
-    return b;
-}
-
-static void MulSecondVar(Poly second_var_p, Poly *res) {
-    if(PolyIsCoeff(res)) {
-        if(!PolyIsZero(res)) {
-            Poly coeff = PolyFromCoeff(res->coeff);
-            Poly p_mul = PolyMul(&second_var_p, &coeff);
-            Mono mono = MonoFromPoly(&p_mul, 0);
-            res->size = 1;
-            res->arr = &mono;
-        }
-    } else {
-        for (int i = 0; i < res->size; i++)
-            res->arr[i].p = PolyMul(&second_var_p, &res->arr[i].p);
-    }
-}
-
 static Poly PolyAddPolys(size_t count, Poly* polys) {
     assert(count > 0);
 
-    Poly res = polys[0];
-    for(size_t i = 1; i < count; i++)
-        res = PolyAdd(&res, &polys[i]);
+    Poly res = PolyZero();
+    for(size_t i = 0; i < count; i++) {
+        Poly temp = res;
+        res = PolyAdd(&temp, &polys[i]);
+        PolyDestroy(&temp);
+    }
 
     for(size_t i = 0; i < count; i++)
         PolyDestroy(&polys[i]);
+
     free(polys);
 
     return res;
@@ -579,13 +559,87 @@ Poly PolyCompose(const Poly *p, size_t k, const Poly* q) {
         return PolyZero();
 
     Poly* polys = SafeCalloc(p->size, sizeof(Poly));
-    for(size_t i = 0; i < min(k, p->size); i++) {
-        Poly new_coeff = PolyCompose((const Poly *) &p->arr[i], k - 1, q + 1);
-        Poly var_poly = PolyExponantiate(q[i], p->arr[i].exp);
-        MulSecondVar(new_coeff, &var_poly);
+    for(size_t i = 0; i < p->size; i++) {
+        Poly coeff_poly = PolyCompose(&p->arr[i].p, k - 1, q + 1);
+        Poly var_poly = PolyExponantiate(q[0], p->arr[i].exp);
+
+        Poly temp = var_poly;
+        var_poly = PolyMul(&coeff_poly, &temp);
+        PolyDestroy(&temp);
+        PolyDestroy(&coeff_poly);
+
         polys[i] = var_poly;
     }
-    PolyDestroy((Poly*) p);
 
     return PolyAddPolys(p->size, polys);
 }
+
+
+// Funkcje pomocnicze do szybkiego przetestowania.
+
+#define CHECK_PTR(p)    	\
+	do {			    	\
+		if (p == NULL) {	\
+			exit(1);		\
+		}					\
+	} while (0)
+
+Poly MakePolyHelper(poly_exp_t dummy, ...) {
+    va_list list;
+    va_start(list, dummy);
+    size_t count = 0;
+    while (true) {
+        va_arg(list, Poly);
+        if (va_arg(list, poly_exp_t) < 0)
+            break;
+        count++;
+    }
+    va_start(list, dummy);
+    Mono *arr = calloc(count, sizeof (Mono));
+    CHECK_PTR(arr);
+    for (size_t i = 0; i < count; ++i) {
+        Poly p = va_arg(list, Poly);
+        arr[i] = MonoFromPoly(&p, va_arg(list, poly_exp_t));
+        // assert(i == 0 || MonoGetExp(&arr[i]) > MonoGetExp(&arr[i - 1]));
+    }
+    va_end(list);
+    Poly res = PolyAddMonos(count, arr);
+    free(arr);
+    return res;
+}
+#define C PolyFromCoeff
+
+#define P(...) MakePolyHelper(0, __VA_ARGS__, PolyZero(), -1)
+
+Mono M(Poly p, poly_exp_t n);
+
+/* int main() {
+    Poly a = P(P(P(C(1), 6), 5), 2, P(C(1), 0, C(1), 2), 3, C(5), 7);
+
+    Poly b [2] = {P(C(1), 4), P(P(C(1), 0, C(1), 1), 1)};
+
+    Poly c = PolyCompose(&a, 2, &b);
+
+    printf("Wielomian a: \n");
+    Print(a);
+    printf("\n");
+
+    printf("Wielomian b_1: \n");
+    Print(*b);
+    printf("\n");
+
+
+    printf("Wielomian b_2: \n");
+    Print(b[1]);
+    printf("\n");
+
+
+    printf("\n");
+    printf("Wielomian c: \n");
+    Print(c);
+
+    PolyDestroy(&a);
+    PolyDestroy(&b);
+    PolyDestroy(&(b[1]));
+    PolyDestroy(&c);
+} */

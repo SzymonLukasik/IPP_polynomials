@@ -18,14 +18,13 @@
  * Sprawdza czy stos wielomianóœ zawiera odpowiednią ilość wielomianów.
  * Gdy zawiera, zwraca prawdę, a w przeciwnym przypadku obsługuje błąd
  * STACK UNDERFLOW.
- * @param[in] size : argument typu MinimalStackSize opisujący wymaganą
- *                   wielkość stosu
+ * @param[in] size : liczba opisująca wymaganą wielkość stosu
  * @param[in] stack : stos wielomianów
  * @param[in] line_nr : numer lini
  * @return Czy stos zawiera wymaganą ilość wielomianów?
  */
 static bool
-StackContains(MinimalStackSize size, PolyStack stack, size_t line_nr) {
+StackContains(size_t size, PolyStack stack, size_t line_nr) {
     if (stack.size >= size)
         return true;
     else {
@@ -43,6 +42,19 @@ static bool IsPushCommand(Command command) {
     for (size_t i = 0; i < PUSH_COMM_NUM; i++)
         if (PUSH_COMMANDS[i] == command.name)
             return true;
+    return false;
+}
+
+static bool ExecuteComposeCommand(Command command, PolyStack *stack, size_t line_nr,
+                                  Poly *res) {
+    size_t k = command.param.k;
+    if(StackContains(k + 1, *stack, line_nr)) {
+        Poly* polys = PolysStackPop(stack, k + 1);
+        Poly p = polys[k];
+        *res = PolyCompose(&p, k, polys);
+
+        return true;
+    }
     return false;
 }
 
@@ -64,7 +76,7 @@ static bool IsPushCommand(Command command) {
 static bool
 PolyStackBinaryOperation(Command command, PolyStack *stack, size_t line_nr,
                          Poly *res) {
-    if (StackContains(TWO, *stack, line_nr)) {
+    if (StackContains(2, *stack, line_nr)) {
         Poly a = PolyStackPop(stack);
         Poly b = PolyStackPop(stack);
 
@@ -102,7 +114,7 @@ PolyStackBinaryOperation(Command command, PolyStack *stack, size_t line_nr,
 static bool
 PolyStackUnaryOperation(Command command, PolyStack *stack, size_t line_nr,
                         Poly *res) {
-    if (StackContains(ONE, *stack, line_nr)) {
+    if (StackContains(1, *stack, line_nr)) {
         if (command.name == CLONE)
             *res = PolyClone(PolyStackTop(*stack));
         else {
@@ -139,6 +151,8 @@ ExecutePushCommand(Command command, PolyStack *stack, size_t line_nr) {
 
     if (command.name == ZERO)
         poly = PolyZero();
+    else if (command.name == COMPOSE)
+        success = ExecuteComposeCommand(command, stack, line_nr, &poly);
     else if (command.name == ADD || command.name == MUL || command.name == SUB)
         success = PolyStackBinaryOperation(command, stack, line_nr, &poly);
     else // Wiemy, że polecenie to CLONE, NEG lub AT
@@ -155,7 +169,7 @@ ExecutePushCommand(Command command, PolyStack *stack, size_t line_nr) {
  * @param line_nr
  */
 static void PrintTopPoly(PolyStack stack, size_t line_nr) {
-    if (StackContains(ONE, stack, line_nr)) {
+    if (StackContains(1, stack, line_nr)) {
         Print(*PolyStackTop(stack));
         printf("\n");
     }
@@ -171,7 +185,7 @@ static void PrintTopPoly(PolyStack stack, size_t line_nr) {
  */
 static void
 ExecuteDegCommand(Command command, PolyStack stack, size_t line_nr) {
-    if (StackContains(ONE, stack, line_nr)) {
+    if (StackContains(1, stack, line_nr)) {
         poly_exp_t deg;
 
         if (command.name == DEG)
@@ -203,8 +217,8 @@ static void PrintZeroOrOne(bool statement) {
  */
 static bool CompareTopPolynomials(PolyStack stack) {
     assert(stack.size >= 2);
-    PolyPair polys = DoublePolyStackTop(stack);
-    return PolyIsEq(polys.first, polys.second);
+    Poly* polys  = PolysStackTop(stack, 2);
+    return PolyIsEq(polys + 0, polys + 1);
 }
 
 /**
@@ -220,9 +234,9 @@ static bool CompareTopPolynomials(PolyStack stack) {
 static void
 ExecuteBooleanCommand(Command command, PolyStack stack, size_t line_nr) {
     if (command.name == IS_EQ) {
-        if (StackContains(TWO, stack, line_nr))
+        if (StackContains(2, stack, line_nr))
             PrintZeroOrOne(CompareTopPolynomials(stack));
-    } else if (StackContains(ONE, stack, line_nr)) {
+    } else if (StackContains(1, stack, line_nr)) {
         if (command.name == IS_COEFF)
             PrintZeroOrOne(PolyIsCoeff(PolyStackTop(stack)));
         else if (command.name == IS_ZERO)
@@ -256,7 +270,7 @@ ExecutePrintCommand(Command command, PolyStack stack, size_t line_nr) {
  * @param[in] line_nr : numer lini
  */
 static void ExecutePopCommand(PolyStack *stack, size_t line_nr) {
-    if (StackContains(ONE, *stack, line_nr)) {
+    if (StackContains(1, *stack, line_nr)) {
         Poly a = PolyStackPop(stack);
         PolyDestroy(&a);
     }
@@ -355,6 +369,7 @@ static void RunCalc() {
  *         (na przykład nieudana alokacja pamięci).
  *         W przeciwnym przypadku 1.
  */
+
 int main() {
     RunCalc();
 }

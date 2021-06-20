@@ -16,7 +16,7 @@
 
 /** Enum określający parsowane liczby. */
 typedef enum NumberType {
-    EXP, VAR_IDX, COEFF
+    EXP, ULL, COEFF
 } NumberType;
 
 /** Definicje makra opisującego minimalną wartość wykładnika jednomianu. */

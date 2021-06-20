@@ -24,9 +24,8 @@
  * @return Czy pierwszy znak fragmentu lini jest poprawny w przypadku
  *         gdy interpretujemy ten fragment jako liczbę odpowiedniego typu?
  */
-
 static bool NumberFirstCharCorrect(string line, NumberType type) {
-    if (type == EXP || type == VAR_IDX)
+    if (type == EXP || type == ULL)
         return (line[0] >= '0' && line[0] <= '9');
     else // Wiemy, że type == COEFF
         return ((line[0] >= '0' && line[0] <= '9') || line[0] == '-');
@@ -51,7 +50,7 @@ static void NumberParse(string line, NumberType type, void *number_ptr,
                         string *end_ptr) {
     if (type == EXP)
         *((poly_exp_t *) number_ptr) = (int) strtol(line, end_ptr, 10);
-    else if (type == VAR_IDX)
+    else if (type == ULL)
         *((size_t *) number_ptr) = strtoul(line, end_ptr, 10);
     else // Wiemy, że type == COEFF
         *((poly_coeff_t *) number_ptr) = strtoll(line, end_ptr, 10);
@@ -69,7 +68,7 @@ static bool ParsingSuccessful(NumberType type, void *number_ptr) {
     /* Wartość  parametru polecenia parametru polecenia AT oraz współczynnika
      * wielomianu jest ograniczona przez zakres wartości typu long long,
      * polecenia DEG_BY - przez zakres wartości typu unsigned long.
-     * Dlatego w przypadku typu COEFF oraz VAR_IDX wystarczy sprawdzić czy
+     * Dlatego w przypadku typu COEFF oraz ULL wystarczy sprawdzić czy
      * funkcja parsująca nie ustawiła wartości errno na ERANGE lub EINVAL */
 
     if (errno != 0)
@@ -320,8 +319,8 @@ static void ShiftToParameter(string *line) {
  * Jeśli powinna, próbuje dokonać parsowania
  * parametru polecenia oraz ustawia odpowiedni rodzaj i specyfikację
  * czynności argumentowi action (jeśli parsowanie się nie powiedzie
- * ustawia jest to opis błędu wejścia - niepoprawny parametr bądź jego brak).
- * Jeśli nie należy, zwraca fałsz.
+ * jest to opis błędu wejścia - niepoprawny parametr bądź jego brak),
+ * a następnie zwraca prawdę. Jeśli nie powinna, zwraca fałsz.
  * @param[in] line : rozważana linia
  * @param[out] action : wskaźnik na zmienną typu \a Action
  * @return Czy linię należy interpretować jako polecenie DEG_BY?
@@ -330,7 +329,7 @@ static bool IsDegBy(string line, Action *action) {
     if (strncmp(line, "DEG_BY", 6) == 0
         && (line[6] == '\n' || line[6] == ' ' || line[6] == '\t')) {
         ShiftToParameter(&line);
-        if (NumberTryToParse(line, VAR_IDX,
+        if (NumberTryToParse(line, ULL,
                              &action->spec.command.param.var_idx,
                              NULL, '\n')) {
             action->type = COMMAND;
@@ -349,7 +348,8 @@ static bool IsDegBy(string line, Action *action) {
  * Jeśli powinna, próbuje dokonać parsowania
  * parametru polecenia oraz ustawia odpowiedni rodzaj i specyfikację
  * czynności argumentowi action (jeśli parsowanie się nie powiedzie
- * ustawia jest to opis błędu wejścia - niepoprawny parametr bądź jego brak).
+ * jest to opis błędu wejścia - niepoprawny parametr bądź jego brak),
+ * a następnie zwraca prawdę. Jeśli nie powinna, zwraca fałsz.
  * @param[in] line : rozważana linia
  * @param[out] action : wskaźnik na zmienną typu \a Action
  * @return Czy linię należy interpretować jako polecenie AT?
@@ -367,7 +367,35 @@ static bool IsAt(string line, Action *action) {
             action->type = INPUT_ERROR;
             action->spec.error = AT_WRONG_VALUE;
         }
-        // Zwalniamy pamięć zaalokowaną przez funkcję ShiftToParameter.
+        return true;
+    }
+    return false;
+}
+
+/**
+ * Sprawdza czy linia powinna być interpretowana jako polecenie COMPOSE.
+ * Jeśli powinna, próbuje dokonać parsowania
+ * parametru polecenia oraz ustawia odpowiedni rodzaj i specyfikację
+ * czynności argumentowi action (jeśli parsowanie się nie powiedzie
+ * jest to opis błędu wejścia - niepoprawny parametr bądź jego brak),
+ * a następnie zwraca prawdę. Jeśli nie powinna, zwraca fałsz.
+ * @param[in] line : rozważana linia
+ * @param[out] action : wskaźnik na zmienną typu \a Action
+ * @return Czy linię należy interpretować jako polecenie COMPOSE?
+ */
+static bool IsCompose(string line, Action *action) {
+    if (strncmp(line, "COMPOSE", 7) == 0
+        && (line[7] == '\n' || line[7] == ' ' || line[7] == '\t')) {
+        ShiftToParameter(&line);
+        // Dokonujemy próby parsowania parametru
+        if (NumberTryToParse(line,ULL, &action->spec.command.param.k,
+                             NULL, '\n')) {
+            action->type = COMMAND;
+            action->spec.command.name = COMPOSE;
+        } else {
+            action->type = INPUT_ERROR;
+            action->spec.error = AT_WRONG_VALUE;
+        }
         return true;
     }
     return false;
@@ -419,7 +447,8 @@ static bool IsFirstCharLatinLetter(string line) {
 static bool CommandTryToParse(string line, Action *action) {
     if (IsNoParamCommand(line, action)
         || IsDegBy(line, action)
-        || IsAt(line, action))
+        || IsAt(line, action)
+        || IsCompose(line, action))
         return true;
     return false;
 }
