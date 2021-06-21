@@ -220,9 +220,14 @@ static Poly PolyAddMonosBrute(size_t count, const Mono monos[]) {
     return p;
 }
 
-Poly PolyCloneMonos(size_t count, const Mono monos[]) {
-    if (count == 0 || monos == NULL)
-        return PolyZero();
+/**
+* Sumuje listę jednomianów i tworzy z nich wielomian.
+* Nie przejmuje na własność zawartość tablicy @p monos.
+* @param[in] count : liczba jednomianów
+* @param[in] monos : tablica jednomianów
+* @return wielomian będący sumą jednomianów
+*/
+static Poly PolyAddMonosNoOwnershipTransfer(size_t count, const Mono monos[]) {
 
     SortMono(count, (Mono *) monos);
     Poly p = PolyAddMonosBrute(count, monos);
@@ -252,7 +257,7 @@ Poly PolyAdd(const Poly *p, const Poly *q) {
         count = p->size + q->size;
     }
 
-    Poly p_sum = PolyCloneMonos(count, monos);
+    Poly p_sum = PolyAddMonosNoOwnershipTransfer(count, monos);
     free(monos);
 
     return p_sum;
@@ -265,7 +270,7 @@ Poly PolyAddMonos(size_t count, const Mono monos[]) {
     // Kopiujemy tablicę monos.
     Mono *monos_copy = MergeMonoArrays(NULL, (Mono *) monos, 0, count);
 
-    Poly p = PolyCloneMonos(count, monos_copy);
+    Poly p = PolyAddMonosNoOwnershipTransfer(count, monos_copy);
     free(monos_copy);
     for (size_t i = 0; i < count; i++)
         MonoDestroy((Mono *) &monos[i]);
@@ -589,6 +594,17 @@ static Poly PolyMulDestroyArgs(Poly *p, Poly *q) {
     return res;
 }
 
+Poly PolyCloneMonos(size_t count, const Mono *monos) {
+    if (count == 0 || monos == NULL)
+        return PolyZero();
+
+    // Kopiujemy tablicę monos.
+    Mono *monos_copy = MergeMonoArrays(NULL, (Mono *) monos, 0, count);
+    Poly p = PolyAddMonosNoOwnershipTransfer(count, monos_copy);
+    free(monos_copy);
+
+    return p;
+}
 
 Poly PolyCompose(const Poly *p, size_t k, const Poly *q) {
     if (PolyIsCoeff(p))

@@ -251,7 +251,7 @@ Poly PolyOwnMonos(size_t count, Mono *monos);
  * @param[in] monos : tablica jednomianów
  * @return wielomian będący sumą jednomianów
  */
-Poly PolyCloneMonos(size_t count, const Mono monos[]);
+Poly PolyCloneMonos(size_t count, const Mono *monos);
 
 /**
  * Dokonuje złożenia wielomianu @p p z wielomianami umieszczonymi w talicy @p q.
