@@ -7,7 +7,6 @@
   @author Szymon Łukasik <sl428760@mimuw.students.edu.pl>
   @date 2021
 */
-#define _GNU_SOURCE
 
 #include <string.h>
 #include <stdlib.h>
@@ -15,6 +14,30 @@
 #include "parsing.h"
 #include "calc.h"
 #include "mono_stack.h"
+
+/** Enum określający parsowane liczby. */
+typedef enum NumberType {
+    EXP, ULL, COEFF
+} NumberType;
+
+/** Minimalna wartość wykładnika jednomianu. */
+#define MIN_EXP 0
+
+/** Maksymalna wartość wykładnika jednomianu. */
+#define MAX_EXP 2147483647
+
+/** Liczba poleceń bezparametrowych. */
+static const size_t NO_PARAM_COMM_NUM = 12;
+
+/** Tablica stringów zawierająca nazwy poleceń bezparametrowych
+ *  z dodanym na końcu znakiem nowej lini.
+ *  Kolejność nazw tych poleceń w tablicy odpowiada kolejności ich
+ *  występowania w definicji typu CommandName.
+ *  */
+static const string NO_PARAM_COMM_NAMES[12] =
+        {"ZERO\n", "IS_COEFF\n", "IS_ZERO\n", "CLONE\n",
+         "ADD\n", "MUL\n", "NEG\n", "SUB\n", "IS_EQ\n",
+         "DEG\n", "PRINT\n", "POP\n"};
 
 /**
  * Sprawdza czy pierwszy znak fragmentu lini jest poprawny w przypadku

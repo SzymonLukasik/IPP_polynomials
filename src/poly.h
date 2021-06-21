@@ -264,6 +264,6 @@ Poly PolyCloneMonos(size_t count, const Mono monos[]);
  * @param[in] q tablica wielomianów
  * @return wielomian będący wynikiem złożenia
  */
-Poly PolyCompose(const Poly *p, size_t k, const Poly q[]);
+Poly PolyCompose(const Poly *p, size_t k, const Poly *q);
 
 #endif // __POLY_H__

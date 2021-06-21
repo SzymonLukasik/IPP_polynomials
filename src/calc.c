@@ -15,6 +15,29 @@
 #include "parsing.h"
 #include "limits.h"
 
+/** Definicja typu string */
+typedef char *string;
+
+/** Liczba poleceń rodzaju PushCommand - skutkujących dodaniem
+ * wielomianu na stos . */
+static const size_t PUSH_COMM_NUM = 8;
+
+/** Tablica zawierająca te wartości typu CommandName, które opisują
+ *  polecenia rodzaju PushCommand */
+static const CommandName PUSH_COMMANDS[8] =
+        {ZERO, CLONE, ADD, MUL, NEG, SUB, AT, COMPOSE};
+
+/** Liczba obsługiwanych błędów wejścia. */
+static const size_t INPUT_ERR_NUM = 5;
+
+/** Tablica stringów zawierająca nazwy błędów wyjścia.
+ *  Kolejność nazw tych błędów w tablicy odpowiada kolejności ich
+ *  występowania w definicji typu InputError. */
+static const string INPUT_ERR_NAMES[5] =
+        {"WRONG COMMAND", "DEG BY WRONG VARIABLE",
+         "AT WRONG VALUE", "COMPOSE WRONG PARAMETER", "WRONG POLY"};
+
+
 /**
  * Sprawdza czy stos wielomianóœ zawiera odpowiednią ilość wielomianów.
  * Gdy zawiera, zwraca prawdę, a w przeciwnym przypadku obsługuje błąd
@@ -46,6 +69,21 @@ static bool IsPushCommand(Command command) {
     return false;
 }
 
+/**
+ * Jeśli stos zawiera co najmniej k + 1 wielomianów, zdejmuje
+ * je ze stosu, wykonuje na nich operację złożenia zgodnie z opisem
+ * polecenia COMPOSE, przypisuje jej wynik zmiennej @p res i zwraca true.
+ * W przeciwnym przypadku zleca obsłużenie błędu STACK UNDERFLOW  i
+ * zwraca fałsz.
+ * @param[in] command : polecenie
+ * @param[in,out] stack : wskaźnik na stos - gdy stos zawiera co
+ *                        najmniej k + 1 wielomianów, zdejmujemy je.
+ * @param[in] line_nr : numer lini
+ * @param[out] res : wskaźnik na wielomian, któremu w przypadku powodzenia
+ *                   przypisujemy wynik operacji
+ * @return Czy stos zawierał co najmniej k + 1 wielomianów i wykonanie operacji
+ *         się powiodło?
+ */
 static bool
 ExecuteComposeCommand(Command command, PolyStack *stack, size_t line_nr,
                       Poly *res) {
@@ -71,7 +109,7 @@ ExecuteComposeCommand(Command command, PolyStack *stack, size_t line_nr,
  * wielomianach z weierzchu stosu operację binarną, wcześniej ściągając
  * z wierzchu stosu dwa wielomiany i przypisuje zmiennej res jej wynik.
  * W przeciwnym przypadku zleca obsłużenie błędu STACK UNDERFLOW.
- * @param[in] command polecenie
+ * @param[in] command : polecenie
  * @param[in, out] stack : wskaźnik na stos - gdy stos zawiera co
  *                        najmniej dwa wielomiany, zdejmujemy z
  *                        jego wierzchu dwa wielomiany
@@ -226,7 +264,9 @@ static void PrintZeroOrOne(bool statement) {
 static bool CompareTopPolynomials(PolyStack stack) {
     assert(stack.size >= 2);
     Poly *polys = PolysStackTop(stack, 2);
-    return PolyIsEq(polys + 0, polys + 1);
+    bool res = PolyIsEq(polys + 0, polys + 1);
+    free(polys);
+    return res;
 }
 
 /**

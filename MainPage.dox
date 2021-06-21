@@ -22,6 +22,7 @@ na takich wielomianach, czyli:
  - zwracanie stopnia wielomianu (globalnie, bądź względem danej zmiennej).
  - tworzenie wielomianu powstałego przez podstawienie za pierwszą zmienną konkretnej wartości
  - stwierdzenie czy dwa wielomiany są równe
+ - składanie wielomianów
 
 ### Opis implementacji biblioteki
 
@@ -65,12 +66,14 @@ Do wyrażenia sumy używamy znaku +.
  - AT x – wylicza wartość wielomianu w punkcie x, usuwa wielomian z wierzchołka i wstawia na stos wynik operacji;
  - PRINT – wypisuje na standardowe wyjście wielomian z wierzchołka stosu;
  - POP – usuwa wielomian z wierzchołka stosu.
+ - COMPOSE k - zdejmuje ze stosu wielomian oraz k kolejnych wielomianów i wstawia na stos wynik operacji złożenia. Niech @f$ l @f$ oznacza liczbę zmiennych wielomianu z wierzchołka stosu. Za zmienne wielomianu @f$ x_0, x_1, \dots, x_{\mathrm{min}(k, l)-1} @f$ podstawiamy kolejne wielomiany spod wierzchołka stosu. Jeśli @f$ k < l @f$, pod zmienne  @f$ x_k, x_{k+1}, \dots, x_{l-1} @f$ podstawiamy zera.
 
 Program obsługuje pięć rodzajów błędów, jest to błąd STACK UNDERFLOW - zwracany w przypadku gdy
  na stosie jest za mało wielomianów oraz 4 błędy wejścia:
  - WRONG COMMAND - niepoprawna nazwa polecenia
  - DEG BY WRONG VARIABLE - niepoprawny parametr polecenia DEG_BY lub jego brak
  - AT WRONG VALUE - niepoprawny parametr polecenia AT lub jego brak
+ - COMPOSE WRONG PARAMETER - niepoprawny parametr polecenia COMPOSE lub jego brak
  - WRONG POLY - niepoprawny wielomian
 
 W obsłudze kalkulatora ważna jest następująca zasada:
@@ -102,7 +105,7 @@ błędy bądź polecenia (takie tablice ułatwiają implementację parsowanie i 
 znajduje się w pliku nagłówkowym calc.h
 
 Jak już zaznaczyliśmy w poprzedniej sekcji, obsługiwane błędy dzielimy na
-błąd STACK UNDERFLOW oraz 4 błędy wejścia.
+błąd STACK UNDERFLOW oraz 5 błędów wejścia.
 
 Dla ułatwienia implementacji dokonujemy kategoryzacji poleceń, ze względu na różne kryteria.
 

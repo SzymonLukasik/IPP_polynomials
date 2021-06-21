@@ -65,7 +65,7 @@ Poly *PolysStackTop(PolyStack stack, size_t k);
  * @p polys[k-2] to wielomian pod wierzchołkiem, itd.
  * Zdejmuje pierwsze @p k wielomianów ze stosu.
  * Zakłada, że stos zawiera co najmniej @p k wielomianów.
- * @param[in] stack : stos wielomianów zawierający co najmniej
+ * @param[in, out] stack : stos wielomianów zawierający co najmniej
  * @p k wielomianów.
  * @param[in] k : liczba wielomianów
  * @return tablica wielomianów

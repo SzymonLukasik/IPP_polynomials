@@ -14,16 +14,8 @@
 #include <sys/types.h>
 #include "calc.h"
 
-/** Enum określający parsowane liczby. */
-typedef enum NumberType {
-    EXP, ULL, COEFF
-} NumberType;
-
-/** Definicje makra opisującego minimalną wartość wykładnika jednomianu. */
-#define MIN_EXP 0
-
-/** Definicje makra opisującego maksymalną wartość wykładnika jednomianu. */
-#define MAX_EXP 2147483647
+/** Definicja typu string */
+typedef char *string;
 
 /**
  * Analizuje wiersz tekstu i zwraca odpowiedni obiekt typu \a Action

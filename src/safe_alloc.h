@@ -11,14 +11,6 @@
 #include <stdlib.h>
 
 /**
- * Alokuje pamięć przy użyciu funkcji malloc,
- * a w przypadku niepowodzenia kończy działanie programu z kodem 1.
- * @param[in] size : ilość pamięci do zaalokowania (w bajtach)
- * @return wskaźnik na zaalkowaną pamięć
- */
-void *SafeMalloc(size_t size);
-
-/**
  * Realokuje pamięć przy użyciu funkcji realloc,
  * a w przypadku niepowodzenia kończy działanie programu z kodem 1.
  * @param[in] ptr : wskaźnik na pamięć do realokacji

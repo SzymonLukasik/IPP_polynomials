@@ -568,7 +568,7 @@ static Poly PolyAddPolys(size_t count, Poly *polys) {
  * @return Wynik operacji compose w przypadku gdy parametr k jest równy zero
  */
 static Poly PolyComposeNoArgs(const Poly *p) {
-    if(PolyIsCoeff(p))
+    if (PolyIsCoeff(p))
         return *p;
     if (p->arr[0].exp == 0)
         return PolyComposeNoArgs(&p->arr[0].p);

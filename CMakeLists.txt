@@ -39,7 +39,11 @@ add_executable(poly ${SOURCE_FILES})
 
 # Wskazujemy pliki źródłowe testów.
 set(TEST_SOURCE_FILES
-        src/example_test.c)
+        src/poly_test.c
+        src/safe_alloc.c
+        src/safe_alloc.h
+        src/poly.c
+        src/poly.h)
 
 # Wskazujemy plik wykonywalny testów biblioteki.
 add_executable(test EXCLUDE_FROM_ALL ${TEST_SOURCE_FILES})
