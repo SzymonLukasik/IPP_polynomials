@@ -69,7 +69,7 @@ Do wyrażenia sumy używamy znaku +.
  - COMPOSE k - zdejmuje ze stosu wielomian oraz k kolejnych wielomianów i wstawia na stos wynik operacji złożenia. Niech @f$ l @f$ oznacza liczbę zmiennych wielomianu z wierzchołka stosu. Za zmienne wielomianu @f$ x_0, x_1, \dots, x_{\mathrm{min}(k, l)-1} @f$ podstawiamy kolejne wielomiany spod wierzchołka stosu. Jeśli @f$ k < l @f$, pod zmienne  @f$ x_k, x_{k+1}, \dots, x_{l-1} @f$ podstawiamy zera.
 
 Program obsługuje pięć rodzajów błędów, jest to błąd STACK UNDERFLOW - zwracany w przypadku gdy
- na stosie jest za mało wielomianów oraz 4 błędy wejścia:
+ na stosie jest za mało wielomianów oraz 5 błędów wejścia:
  - WRONG COMMAND - niepoprawna nazwa polecenia
  - DEG BY WRONG VARIABLE - niepoprawny parametr polecenia DEG_BY lub jego brak
  - AT WRONG VALUE - niepoprawny parametr polecenia AT lub jego brak
