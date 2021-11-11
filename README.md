@@ -48,7 +48,7 @@ Constant is an integer. Monomial is a pair (**coeff**, **exp**) where coefficien
 The **+** character express the sum of monomials.
 
 For example **((3, 0)+((5,4),7),12)+((1,0)+(2,1)+(1,2),14)+(5,28)** represents following polynomial:
-$$(3 + 5x_2^4 \, x_1^7) \, x_0^{12} + (1 + 2x_1 + x_1^2) \, x_0^{14} + 5x_0^{28}$$
+$(3 + 5x_2^4 \, x_1^7) \, x_0^{12} + (1 + 2x_1 + x_1^2) \, x_0^{14} + 5x_0^{28}$
 
 ### Calculator's commands
 
