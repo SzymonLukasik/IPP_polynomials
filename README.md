@@ -82,10 +82,8 @@ The program handles 5 kinds of errors. That is STACK_UNDERFLOW error - raised wh
 ## Usage
 
 To run the calculator, in the repository root do:\
-<code>
-mkdir release\
-cd release\
-cmake ..\
-chmod u+x ./poly\
-./poly
-</code>
+<code>mkdir release</code>\
+<code>cd release</code>\
+<code>cmake ..</code>\
+<code>chmod u+x ./poly</code>\
+<code>./poly</code>
