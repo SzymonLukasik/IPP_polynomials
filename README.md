@@ -5,7 +5,6 @@
 The library providing operations on multivariable sparse polynomials and a calculator operating on such polynomials using reverse polish notation.
 
 ## Definition of polynomial 
-<img src="https://render.githubusercontent.com/render/math?math=e^{i +\pi} =x + 1">
 We say that $x_0, x_1, x_2 \dots$ are polynomial's variables.\
 Polynomial has a recursive definition. \
 A polynomial is a sum of monomials of form $px_i^n$ where $n$ is an exponent of this monomial being a nonnegative integer and $p$ is the coefficient which is a polynomial.\
